@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #F4F7FB; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #0C1A2E; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #C5D4E8; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #8FA9C4; }
+
+@keyframes ping {
+  0%   { transform: scale(1); opacity: 0.5; }
+  70%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes fadeInUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
+}
+
+table { width: 100%; }
+th, td { vertical-align: middle; }
+
+input:focus, select:focus, textarea:focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
+  outline: none;
+}
+
+.fade-in { animation: fadeInUp 0.3s ease both; }
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
+
+/* Tables: horizontal scroll on mobile */
+.table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Modal drag handle hidden on desktop */
+@media (min-width: 640px) {
+  .modal-handle { display: none !important; }
+}
+
+/* Page content padding on mobile */
+@media (max-width: 639px) {
+  /* Stat grids collapse to 2 cols */
+  .grid4-resp { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  /* Two-column layout stacks */
+  .grid2-resp { grid-template-columns: 1fr !important; gap: 14px !important; }
+  /* Inline form grids inside modals go single column */
+  .modal-form-grid { grid-template-columns: 1fr !important; }
+  /* Reduce card padding */
+  .fade-in > div { }
+  /* Tables scroll horizontally */
+  table { min-width: 560px; }
+  .card-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 14px; }
+}

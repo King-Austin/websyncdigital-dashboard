@@ -1,0 +1,149 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !password) return;
+    setLoading(true);
+    setError('');
+    const supabase = createClient();
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    if (err) {
+      setError(err.message);
+      setLoading(false);
+    } else {
+      setSuccess(true);
+      setTimeout(() => router.push('/'), 1500);
+    }
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      {/* Brand panel */}
+      <div style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.3) 0%, transparent 60%)' }} />
+        {[{w:600,h:600,t:-200,l:-200},{w:400,h:400,b:-150,r:-150},{w:200,h:200,t:'40%',r:'10%'}].map((c,i) => (
+          <div key={i} style={{ position:'absolute', width:c.w, height:c.h, top:c.t as any, left:c.l as any, bottom:c.b as any, right:c.r as any, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.1)' }}/>
+        ))}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'float 3s ease-in-out infinite' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M3 12L7.5 20L12 9L16.5 20L21 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ color: '#fff', fontWeight: 800, fontSize: 18, letterSpacing: '-0.3px' }}>Websync Digital</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 500, letterSpacing: '1px', textTransform: 'uppercase' }}>Client Portal</div>
+          </div>
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 0 32px' }}>
+          <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1.15, letterSpacing: '-1px', marginBottom: 18 }}>Your web presence,<br />always in view.</div>
+          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.65, maxWidth: 360 }}>Monitor your websites, track performance metrics, manage invoices, and get instant support — all in one clean dashboard.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 36 }}>
+            {[['99.9%','Uptime SLA'],['24h','Response time'],['50+','Sites managed']].map(([v,l]) => (
+              <div key={l} style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>{v}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ position: 'relative', zIndex: 1, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>© 2026 Websync Digital · websyncdigital.com.ng</div>
+      </div>
+
+      {/* Form panel */}
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '48px 56px', background: '#fff' }}>
+        <div style={{ width: '100%', maxWidth: 400, animation: 'fadeInUp 0.4s ease both' }}>
+          {success ? (
+            <div style={{ textAlign: 'center', padding: '32px 0' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#ECFDF5', border: '2px solid #16A34A30', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#0C1A2E', marginBottom: 8 }}>You&apos;re in!</div>
+              <div style={{ fontSize: 14, color: '#5B728E', marginBottom: 24 }}>Redirecting to your dashboard…</div>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: 20, height: 20, border: '2px solid #DDE5F0', borderTopColor: '#2563EB', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleLogin}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#0C1A2E', letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome back</div>
+              <div style={{ fontSize: 14, color: '#5B728E', marginBottom: 32, lineHeight: 1.5 }}>Sign in to your Websync client portal to manage your websites and more.</div>
+
+              {error && (
+                <div style={{ marginBottom: 16, padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, fontSize: 13, color: '#DC2626' }}>{error}</div>
+              )}
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#5B728E', marginBottom: 6 }}>Email address</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com.ng" autoComplete="email"
+                  style={{ width: '100%', padding: '11px 14px', background: '#F4F7FB', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontFamily: 'Plus Jakarta Sans', color: '#0C1A2E', outline: 'none', transition: 'all 0.15s' }} />
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#5B728E', marginBottom: 6 }}>Password</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password"
+                    style={{ width: '100%', padding: '11px 44px 11px 14px', background: '#F4F7FB', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontFamily: 'Plus Jakarta Sans', color: '#0C1A2E', outline: 'none', transition: 'all 0.15s' }} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8FA9C4', padding: 4 }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                      {showPw
+                        ? <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>
+                        : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>
+                      }
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#5B728E', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#2563EB' }} /> Remember me
+                </label>
+                <a href="#" style={{ fontSize: 13, color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
+              </div>
+
+              <button type="submit" disabled={loading || !email || !password} style={{ width: '100%', padding: 13, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: 'Plus Jakarta Sans', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(37,99,235,0.3)', transition: 'all 0.15s', marginBottom: 16, opacity: loading ? 0.7 : 1 }}>
+                {loading ? <><div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Signing in…</> : 'Sign in'}
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0', color: '#8FA9C4', fontSize: 12 }}>
+                <div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />or continue with<div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />
+              </div>
+
+              <div style={{ textAlign: 'center', padding: 12, background: '#F4F7FB', border: '1px solid #DDE5F0', borderRadius: 10, fontSize: 12, color: '#5B728E', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA9C4" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                </svg>
+                Secured by <strong style={{ color: '#0C1A2E' }}>Supabase Auth</strong> — SSO available for enterprise clients
+              </div>
+
+              <div style={{ textAlign: 'center', fontSize: 13, color: '#5B728E' }}>
+                New to Websync? <Link href="/register" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}>Create an account →</Link>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
