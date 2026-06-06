@@ -48,12 +48,23 @@ export default function RegisterPage() {
     });
     if (err) { setError(err.message); setLoading(false); return; }
     if (data.user) {
-      await supabase.from('profiles').upsert({
-        id: data.user.id, name: form.name, company: form.company, phone: form.phone, role: 'client',
+      await supabase.from('ws_profiles').upsert({
+        id: data.user.id, name: form.name, company: form.company, phone: form.phone,
+        email: form.email, role: 'client',
       });
     }
     setDone(true);
     setLoading(false);
+  }
+
+  async function handleGoogle() {
+    setError('');
+    const supabase = createClient();
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (err) setError(err.message);
   }
 
   if (done) {
@@ -74,9 +85,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1.4fr' }}>
+    <div className="reg-root" style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1.4fr' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .reg-root { grid-template-columns: 1fr !important; }
+          .reg-brand { display: none !important; }
+          .reg-form-panel { padding: 32px 24px !important; }
+        }
+      `}</style>
       {/* Brand */}
-      <div style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 60%, #60A5FA 100%)', padding: 48, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', zIndex: 0 }}>
+      <div className="reg-brand" style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 60%, #60A5FA 100%)', padding: 48, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', zIndex: 0 }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 65%)' }}/>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1, marginBottom: 'auto' }}>
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'float 3s ease-in-out infinite' }}>
@@ -103,7 +121,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Form */}
-      <div style={{ padding:'48px 56px', background:'#fff', overflowY:'auto' }}>
+      <div className="reg-form-panel" style={{ padding:'48px 56px', background:'#fff', overflowY:'auto' }}>
         <div style={{ maxWidth:480, margin:'0 auto', animation:'fadeInUp 0.4s ease both' }}>
           {/* Step indicator */}
           <div style={{ display:'flex', alignItems:'center', gap:0, marginBottom:36 }}>
@@ -157,6 +175,20 @@ export default function RegisterPage() {
 
               <button onClick={()=>{setError('');setStep(1)}} disabled={!form.email||!form.password||form.password!==form.confirmPassword} style={{ width:'100%', padding:13, background:'#2563EB', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'Plus Jakarta Sans', cursor:'pointer', opacity:(!form.email||!form.password||form.password!==form.confirmPassword)?0.5:1 }}>
                 Continue →
+              </button>
+
+              <div style={{ display:'flex', alignItems:'center', gap:12, margin:'18px 0', color:'#8FA9C4', fontSize:12 }}>
+                <div style={{ flex:1, height:1, background:'#DDE5F0' }} />or<div style={{ flex:1, height:1, background:'#DDE5F0' }} />
+              </div>
+
+              <button type="button" onClick={handleGoogle} style={{ width:'100%', padding:12, background:'#fff', color:'#0C1A2E', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontWeight:600, fontFamily:'Plus Jakarta Sans', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
+                </svg>
+                Continue with Google
               </button>
             </div>
           )}

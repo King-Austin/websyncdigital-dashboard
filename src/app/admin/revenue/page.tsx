@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { T, fmt } from '@/lib/theme';
 import { CLIENTS_DATA, REV_DATA } from '@/lib/data';
 import { Card, Grid2, SectionTitle } from '@/components/ui';
@@ -8,16 +9,41 @@ import { StatusBadge } from '@/components/ui';
 import { Dot } from '@/components/ui';
 import { BarChart } from '@/components/charts';
 
+interface PaystackStats {
+  activeSubs: number;
+  successfulCharges: number;
+  failedPayments: number;
+  avgValue: number;
+  totalCharged: number;
+  month: string;
+}
+
 export default function AdminRevenue() {
   const MRR = CLIENTS_DATA.filter(c => c.status === 'active').reduce((s, c) => s + c.mrr, 0);
   const ARR = MRR * 12;
   const ytd = REV_DATA.reduce((s, d) => s + d.r, 0);
 
-  const paystackStats = [
-    { l: 'Active Subscriptions', v: '4',       col: T.success },
-    { l: 'Successful Charges',   v: '23',      col: T.accent  },
-    { l: 'Failed Payments',      v: '1',       col: T.danger  },
-    { l: 'Avg. Payment Value',   v: '₦20,750', col: T.info    },
+  const [stats, setStats]     = useState<PaystackStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(false);
+
+  useEffect(() => {
+    fetch('/api/paystack/stats')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { setStats(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
+  }, []);
+
+  const statRows = stats ? [
+    { l: 'Active Subscriptions', v: String(stats.activeSubs),         col: T.success },
+    { l: 'Successful Charges',   v: String(stats.successfulCharges),  col: T.accent  },
+    { l: 'Failed Payments',      v: String(stats.failedPayments),      col: T.danger  },
+    { l: 'Avg. Payment Value',   v: fmt(Math.round(stats.avgValue / 100)), col: T.info },
+  ] : [
+    { l: 'Active Subscriptions', v: '—', col: T.success },
+    { l: 'Successful Charges',   v: '—', col: T.accent  },
+    { l: 'Failed Payments',      v: '—', col: T.danger  },
+    { l: 'Avg. Payment Value',   v: '—', col: T.info    },
   ];
 
   return (
@@ -49,27 +75,37 @@ export default function AdminRevenue() {
       </Grid2>
 
       <Card style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: T.text }}>Paystack Analytics</div>
-            <div style={{ fontSize: 12, color: T.textS }}>Live payment data from your Paystack dashboard</div>
+            <div style={{ fontWeight: 700, fontSize: 15, color: T.text }}>
+              Paystack Analytics {stats && <span style={{ fontSize: 12, fontWeight: 500, color: T.textS }}>— {stats.month}</span>}
+            </div>
+            <div style={{ fontSize: 12, color: T.textS }}>Live payment data from Paystack</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', background: '#00C3F712', borderRadius: 8, border: '1px solid #00C3F725' }}>
-            <Dot color="#00C3F7" pulse/>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#0099BF' }}>Connected</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', background: error ? T.danger + '12' : '#00C3F712', borderRadius: 8, border: `1px solid ${error ? T.danger + '25' : '#00C3F725'}` }}>
+            {loading
+              ? <span style={{ fontSize: 12, color: T.textS }}>Loading…</span>
+              : error
+                ? <><Dot color={T.danger}/><span style={{ fontSize: 12, fontWeight: 600, color: T.danger }}>Error</span></>
+                : <><Dot color="#00C3F7" pulse/><span style={{ fontSize: 12, fontWeight: 600, color: '#0099BF' }}>Live</span></>
+            }
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
-          {paystackStats.map((s, i) => (
+
+        <div className="grid4-resp">
+          {statRows.map((s, i) => (
             <div key={i} style={{ padding: '14px 16px', background: T.elevated, borderRadius: 10, border: `1px solid ${T.border}` }}>
               <div style={{ fontSize: 10, color: T.textM, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.l}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: s.col }}>{s.v}</div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: loading ? T.textM : s.col }}>{s.v}</div>
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 14, padding: '10px 14px', background: T.elevated, borderRadius: 8, fontSize: 12, color: T.textS }}>
-          <strong style={{ color: T.text }}>Integration note:</strong> Connect your Paystack secret key in Settings → Integrations to pull live subscription counts, failed charges and payout history directly here.
-        </div>
+
+        {error && (
+          <div style={{ marginTop: 14, padding: '10px 14px', background: T.elevated, borderRadius: 8, fontSize: 12, color: T.textS }}>
+            <strong style={{ color: T.text }}>Could not reach Paystack API.</strong> Check that your secret key is set in <code>.env.local</code> and is a live key (not a test key starting with <code>pk_test_</code>).
+          </div>
+        )}
       </Card>
 
       <Card style={{ marginBottom: 20 }}>
@@ -77,14 +113,14 @@ export default function AdminRevenue() {
         <BarChart data={REV_DATA} h={130}/>
       </Card>
 
-      <Card style={{ padding: 0 }}>
+      <Card style={{ padding: 0, overflowX: 'auto' }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}` }}>
           <SectionTitle>Revenue by Client</SectionTitle>
         </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 520 }}>
           <thead>
             <tr>
-              {['Client', 'Plan', 'Contract Value', 'Monthly Contribution', 'Status'].map(h => (
+              {['Client', 'Plan', 'Monthly', 'Status'].map(h => (
                 <th key={h} style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, color: T.textM, fontWeight: 600, borderBottom: `1px solid ${T.border}`, textTransform: 'uppercase', letterSpacing: '0.5px', background: T.elevated }}>{h}</th>
               ))}
             </tr>
@@ -95,11 +131,13 @@ export default function AdminRevenue() {
                 <td style={{ padding: '13px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={c.name} sz={30}/>
-                    <div><div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{c.name}</div><div style={{ fontSize: 11, color: T.textS }}>{c.company}</div></div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: T.textS }}>{c.company}</div>
+                    </div>
                   </div>
                 </td>
                 <td style={{ padding: '13px 16px' }}><Badge col={T.info}>Monthly</Badge></td>
-                <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 700, color: T.text }}>{fmt(c.mrr)}/mo</td>
                 <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 700, color: T.success }}>{fmt(c.mrr)}/mo</td>
                 <td style={{ padding: '13px 16px' }}><StatusBadge s={c.status}/></td>
               </tr>

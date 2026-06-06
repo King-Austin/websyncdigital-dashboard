@@ -75,3 +75,34 @@ export interface RevData {
   m: string;
   r: number;
 }
+
+export type ProjectStatus = 'submitted' | 'active' | 'cancelled';
+
+export interface ProjectFile {
+  id: string;
+  project_id: string;
+  kind: 'logo' | 'image';
+  path: string;
+  url?: string;          // signed URL, filled in when fetched
+}
+
+export interface Project {
+  id: string;
+  client_id: string;
+  name: string;
+  status: ProjectStatus;
+  business_name?: string;
+  about?: string;
+  extra_info?: string;
+  socials?: string;
+  address?: string;
+  phone?: string;
+  business_email?: string;
+  brand_colors?: string;
+  whatsapp?: string;
+  paystack_subscription_code?: string;
+  paystack_customer_code?: string;
+  created_at: string;
+  updated_at?: string;
+  files?: ProjectFile[];
+}

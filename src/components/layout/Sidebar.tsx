@@ -4,6 +4,31 @@ import React from 'react';
 import { T } from '@/lib/theme';
 import { Avatar } from '@/components/ui';
 import { IcShield } from '@/components/ui/Icons';
+import { useTheme } from '@/lib/ThemeProvider';
+
+const ThemeToggle = () => {
+  const { theme, toggle } = useTheme();
+  const dark = theme === 'dark';
+  return (
+    <button onClick={toggle} aria-label="Toggle theme" style={{
+      width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+      borderRadius: 9, background: 'transparent', border: `1px solid ${T.border}`,
+      cursor: 'pointer', fontSize: 13, fontWeight: 500, color: T.textS,
+      fontFamily: 'Plus Jakarta Sans', marginBottom: 8, transition: 'all 0.12s',
+    }}>
+      {dark ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B728E" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      )}
+      <span style={{ flex: 1, textAlign: 'left' }}>{dark ? 'Light mode' : 'Dark mode'}</span>
+    </button>
+  );
+};
 
 export const WsLogo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -34,10 +59,11 @@ interface SidebarProps {
   role: 'client' | 'admin';
   userName?: string;
   userEmail?: string;
+  open?: boolean;
 }
 
-export const Sidebar = ({ items, active, onSelect, role, userName, userEmail }: SidebarProps) => (
-  <aside style={{ width: 240, background: T.sidebar, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, overflowY: 'auto' }}>
+export const Sidebar = ({ items, active, onSelect, role, userName, userEmail, open }: SidebarProps) => (
+  <aside className={`ws-sidebar${open ? ' open' : ''}`} style={{ width: 240, background: T.sidebar, borderRight: `1px solid ${T.border}`, display: 'flex', flexDirection: 'column', height: '100vh', position: 'fixed', left: 0, top: 0, overflowY: 'auto', zIndex: 200 }}>
     <div style={{ padding: '22px 20px 16px', borderBottom: `1px solid ${T.border}` }}>
       <WsLogo />
       {role === 'admin' && (
@@ -69,6 +95,7 @@ export const Sidebar = ({ items, active, onSelect, role, userName, userEmail }: 
       )}
     </nav>
     <div style={{ padding: '12px 10px', borderTop: `1px solid ${T.border}` }}>
+      <ThemeToggle />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 10, background: T.elevated }}>
         <Avatar name={userName || (role === 'admin' ? 'Websync Admin' : 'Client')} sz={32} />
         <div style={{ overflow: 'hidden' }}>
@@ -80,11 +107,20 @@ export const Sidebar = ({ items, active, onSelect, role, userName, userEmail }: 
   </aside>
 );
 
-export const PageHeader = ({ title, sub, actions }: { title: string; sub?: string; actions?: React.ReactNode }) => (
-  <header style={{ padding: '0 28px', height: 62, borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: T.sidebar, position: 'sticky', top: 0, zIndex: 100, flexShrink: 0 }}>
-    <div>
-      <h1 style={{ fontSize: 18, fontWeight: 700, color: T.text, letterSpacing: '-0.3px' }}>{title}</h1>
-      {sub && <div style={{ fontSize: 12, color: T.textS, marginTop: 1 }}>{sub}</div>}
+export const PageHeader = ({ title, sub, actions, onMenuClick }: { title: string; sub?: string; actions?: React.ReactNode; onMenuClick?: () => void }) => (
+  <header style={{ padding: '0 20px', height: 62, borderBottom: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: T.sidebar, position: 'sticky', top: 0, zIndex: 100, flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {onMenuClick && (
+        <button onClick={onMenuClick} className="ws-menu-btn" style={{ display: 'none', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 8px', cursor: 'pointer', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.textS} strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      )}
+      <div>
+        <h1 style={{ fontSize: 17, fontWeight: 700, color: T.text, letterSpacing: '-0.3px' }}>{title}</h1>
+        {sub && <div style={{ fontSize: 12, color: T.textS, marginTop: 1 }}>{sub}</div>}
+      </div>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>{actions}</div>
   </header>

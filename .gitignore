@@ -50,6 +50,7 @@ next-env.d.ts
 
 # claude code
 /.claude/
+.mcp.json
 .rtk/
 supabase/.temp/
 scheduled_tasks.lock

@@ -2,21 +2,17 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Home() {
-  try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) redirect('/login');
+  if (!user) redirect('/login');
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from('ws_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
 
-    if (profile?.role === 'admin') redirect('/admin');
-    redirect('/client');
-  } catch {
-    redirect('/login');
-  }
+  if (profile?.role === 'admin') redirect('/admin');
+  redirect('/client');
 }

@@ -31,10 +31,27 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogle() {
+    setError('');
+    const supabase = createClient();
+    const { error: err } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    if (err) setError(err.message);
+  }
+
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+    <div className="login-root" style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .login-root { grid-template-columns: 1fr !important; }
+          .login-brand { display: none !important; }
+          .login-form-panel { padding: 32px 24px !important; }
+        }
+      `}</style>
       {/* Brand panel */}
-      <div style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, position: 'relative', overflow: 'hidden' }}>
+      <div className="login-brand" style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.3) 0%, transparent 60%)' }} />
         {[{w:600,h:600,t:-200,l:-200},{w:400,h:400,b:-150,r:-150},{w:200,h:200,t:'40%',r:'10%'}].map((c,i) => (
           <div key={i} style={{ position:'absolute', width:c.w, height:c.h, top:c.t as any, left:c.l as any, bottom:c.b as any, right:c.r as any, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.1)' }}/>
@@ -69,7 +86,7 @@ export default function LoginPage() {
       </div>
 
       {/* Form panel */}
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '48px 56px', background: '#fff' }}>
+      <div className="login-form-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '48px 56px', background: '#fff' }}>
         <div style={{ width: '100%', maxWidth: 400, animation: 'fadeInUp 0.4s ease both' }}>
           {success ? (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
@@ -126,18 +143,21 @@ export default function LoginPage() {
                 {loading ? <><div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Signing in…</> : 'Sign in'}
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0', color: '#8FA9C4', fontSize: 12 }}>
-                <div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />or continue with<div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 16px', color: '#8FA9C4', fontSize: 12 }}>
+                <div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />or<div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />
               </div>
 
-              <div style={{ textAlign: 'center', padding: 12, background: '#F4F7FB', border: '1px solid #DDE5F0', borderRadius: 10, fontSize: 12, color: '#5B728E', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA9C4" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+              <button type="button" onClick={handleGoogle} style={{ width: '100%', padding: 12, background: '#fff', color: '#0C1A2E', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: 'Plus Jakarta Sans', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/>
                 </svg>
-                Secured by <strong style={{ color: '#0C1A2E' }}>Supabase Auth</strong> — SSO available for enterprise clients
-              </div>
+                Continue with Google
+              </button>
 
-              <div style={{ textAlign: 'center', fontSize: 13, color: '#5B728E' }}>
+              <div style={{ textAlign: 'center', fontSize: 13, color: '#5B728E', marginTop: 20 }}>
                 New to Websync? <Link href="/register" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}>Create an account →</Link>
               </div>
             </form>

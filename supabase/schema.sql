@@ -15,9 +15,10 @@ CREATE TABLE IF NOT EXISTS ws_profiles (
 CREATE OR REPLACE FUNCTION public.ws_handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.ws_profiles (id, name, company, phone, role)
+  INSERT INTO public.ws_profiles (id, email, name, company, phone, role)
   VALUES (
     NEW.id,
+    NEW.email,
     NEW.raw_user_meta_data->>'name',
     NEW.raw_user_meta_data->>'company',
     NEW.raw_user_meta_data->>'phone',
@@ -89,6 +90,50 @@ CREATE TABLE IF NOT EXISTS ws_portfolio (
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── PROJECTS (one per website a client asks us to build) ─────────────────────
+CREATE TABLE IF NOT EXISTS ws_projects (
+  id                         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id                  UUID REFERENCES ws_profiles(id) ON DELETE CASCADE,
+  name                       TEXT NOT NULL,
+  status                     TEXT NOT NULL DEFAULT 'submitted'
+                               CHECK (status IN ('submitted', 'active', 'cancelled')),
+  business_name              TEXT,
+  about                      TEXT,
+  extra_info                 TEXT,
+  socials                    TEXT,
+  address                    TEXT,
+  phone                      TEXT,
+  business_email             TEXT,
+  brand_colors               TEXT,
+  whatsapp                   TEXT,
+  paystack_subscription_code TEXT,
+  paystack_customer_code     TEXT,
+  created_at                 TIMESTAMPTZ DEFAULT NOW(),
+  updated_at                 TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── PROJECT FILES (logo + business images in Supabase Storage) ───────────────
+CREATE TABLE IF NOT EXISTS ws_project_files (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID REFERENCES ws_projects(id) ON DELETE CASCADE,
+  kind        TEXT NOT NULL CHECK (kind IN ('logo', 'image')),
+  path        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ── PAYMENTS (Paystack webhook records) ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ws_payments (
+  reference       TEXT PRIMARY KEY,
+  email           TEXT NOT NULL,
+  amount          INTEGER NOT NULL,         -- in kobo
+  status          TEXT DEFAULT 'success',
+  plan            TEXT,
+  project_id      UUID REFERENCES ws_projects(id) ON DELETE SET NULL,
+  paid_at         TIMESTAMPTZ,
+  event_type      TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ws_notifications (
   id          SERIAL PRIMARY KEY,
@@ -100,6 +145,15 @@ CREATE TABLE IF NOT EXISTS ws_notifications (
 );
 
 -- ── ROW LEVEL SECURITY ────────────────────────────────────────────────────────
+-- ws_payments and ws_invoices.paystack_reference
+-- Add email column to ws_profiles so webhook can look up by email
+ALTER TABLE ws_profiles ADD COLUMN IF NOT EXISTS email TEXT;
+-- Add paystack_reference to ws_invoices for reconciliation
+ALTER TABLE ws_invoices ADD COLUMN IF NOT EXISTS paystack_reference TEXT;
+
+ALTER TABLE ws_payments       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ws_projects       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ws_project_files  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_profiles       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_websites       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_invoices       ENABLE ROW LEVEL SECURITY;
@@ -153,3 +207,22 @@ CREATE POLICY "ws_public_portfolio_visible" ON ws_portfolio FOR SELECT
   USING (visibility = 'public' OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
 CREATE POLICY "ws_admins_manage_portfolio" ON ws_portfolio FOR ALL
   USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- ws_payments (service role writes; admin can view)
+CREATE POLICY "ws_admins_see_payments" ON ws_payments FOR SELECT
+  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- ws_projects (clients manage their own; admins see all)
+CREATE POLICY "ws_clients_see_own_projects" ON ws_projects FOR SELECT
+  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+CREATE POLICY "ws_clients_insert_own_projects" ON ws_projects FOR INSERT
+  WITH CHECK (client_id = auth.uid());
+CREATE POLICY "ws_clients_update_own_projects" ON ws_projects FOR UPDATE
+  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+
+-- ws_project_files (same visibility as parent project)
+CREATE POLICY "ws_project_files_access" ON ws_project_files FOR SELECT
+  USING (EXISTS (SELECT 1 FROM ws_projects p WHERE p.id = project_id
+    AND (p.client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'))));
+CREATE POLICY "ws_project_files_insert" ON ws_project_files FOR INSERT
+  WITH CHECK (EXISTS (SELECT 1 FROM ws_projects p WHERE p.id = project_id AND p.client_id = auth.uid()));
