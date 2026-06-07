@@ -7,7 +7,7 @@ import { T } from '@/lib/theme';
 import { ThemeProvider } from '@/lib/ThemeProvider';
 import { Sidebar, PageHeader, NavItem } from '@/components/layout/Sidebar';
 import { BottomNav, BottomTab } from '@/components/layout/BottomNav';
-import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog, IcPlus, IcCard } from '@/components/ui/Icons';
+import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog, IcPlus } from '@/components/ui/Icons';
 
 const CLIENT_TABS: BottomTab[] = [
   { k: '/client',          label: 'Home',     icon: <IcHome /> },
@@ -22,7 +22,6 @@ const CLIENT_NAV: NavItem[] = [
   { k: '/client/websites',     label: 'My Websites',        icon: <IcGlobe /> },
   { k: '/client/metrics',      label: 'Metrics',            icon: <IcBar /> },
   { k: 'd1', divider: true },
-  { k: '/client/billing',       label: 'Billing',           icon: <IcCard /> },
   { k: '/client/notifications', label: 'Notifications',     icon: <IcBell /> },
   { k: '/client/settings',      label: 'Settings',          icon: <IcCog /> },
 ];

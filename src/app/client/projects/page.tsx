@@ -5,8 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { T } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Btn, Input, Textarea, StatusBadge } from '@/components/ui';
-import { IcPlus, IcCard, IcCheck, IcGlobe, IcEdit, IcTrash, IcBar, IcCog, IcMail, IcAlert, IcFile } from '@/components/ui/Icons';
-import Link from 'next/link';
+import { IcPlus, IcCard, IcCheck, IcGlobe, IcEdit, IcTrash, IcBar, IcCog, IcMail, IcAlert } from '@/components/ui/Icons';
 import type { Project, WsInvoice } from '@/types';
 
 const BUCKET = 'ws-project-files';
@@ -240,11 +239,6 @@ function ProjectsInner() {
                     <Btn sz="sm" variant="outline" onClick={() => setConfirmProject(p)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
                       <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Re-subscribe'}
                     </Btn>
-                  )}
-                  {p.status === 'active' && (
-                    <Link href="/client/billing" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 11px', fontSize: 12, fontWeight: 600, color: T.textS, border: `1px solid ${T.border}`, borderRadius: 8, textDecoration: 'none', background: 'transparent', fontFamily: 'var(--font-app)' }}>
-                      <IcFile sz={12} col={T.textS}/> Manage subscription
-                    </Link>
                   )}
 
                   {/* CRUD — icon-only, only while payment is not completed */}

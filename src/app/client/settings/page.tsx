@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { T } from '@/lib/theme';
-import { Card, Btn, Input } from '@/components/ui';
+import { Card, Btn, Input, StatusBadge } from '@/components/ui';
 import { Avatar } from '@/components/ui';
-import { IcCheck, IcAlert, IcShield } from '@/components/ui/Icons';
+import { IcCheck, IcAlert, IcShield, IcGlobe } from '@/components/ui/Icons';
+import type { Project } from '@/types';
 
 interface Profile {
   name: string;
@@ -22,6 +23,46 @@ export default function ClientSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [msg, setMsg]         = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+
+  // Subscription management state (buried, collapsed by default)
+  const [subOpen, setSubOpen]       = useState(false);
+  const [projects, setProjects]     = useState<Project[]>([]);
+  const [subLoading, setSubLoading] = useState(false);
+  const [confirmId, setConfirmId]   = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelErr, setCancelErr]   = useState<string | null>(null);
+  const [cancelled, setCancelled]   = useState<string[]>([]);
+
+  const loadSubs = useCallback(async () => {
+    setSubLoading(true);
+    const res = await fetch('/api/projects');
+    if (res.ok) {
+      const all: Project[] = await res.json();
+      setProjects(all.filter(p => p.status === 'active'));
+    }
+    setSubLoading(false);
+  }, []);
+
+  useEffect(() => { if (subOpen && projects.length === 0) loadSubs(); }, [subOpen, projects.length, loadSubs]);
+
+  async function cancelSubscription(projectId: string) {
+    setCancelling(projectId);
+    setCancelErr(null);
+    const res = await fetch('/api/paystack/cancel-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setCancelled(prev => [...prev, projectId]);
+      setProjects(ps => ps.filter(p => p.id !== projectId));
+    } else {
+      setCancelErr(data.error || 'Could not cancel. Please try again or contact support.');
+    }
+    setCancelling(null);
+    setConfirmId(null);
+  }
 
   useEffect(() => {
     fetch('/api/profile')
@@ -129,7 +170,7 @@ export default function ClientSettings() {
       </Card>
 
       {/* Read-only account info */}
-      <Card>
+      <Card style={{ marginBottom: 18 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 14 }}>Account</div>
         {[
           { l: 'Account type', v: form.role.charAt(0).toUpperCase() + form.role.slice(1) },
@@ -141,6 +182,75 @@ export default function ClientSettings() {
           </div>
         ))}
       </Card>
+
+      {/* Danger zone — collapsed, low visibility */}
+      <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 18 }}>
+        <button
+          onClick={() => setSubOpen(o => !o)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, padding: 0, fontFamily: 'var(--font-app)' }}
+        >
+          <span style={{ fontSize: 12, color: T.textM, fontWeight: 500 }}>Manage subscriptions</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={T.textM} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: subOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        {subOpen && (
+          <div style={{ marginTop: 14 }}>
+            {cancelErr && (
+              <div style={{ padding: '10px 14px', borderRadius: 10, background: '#FEF2F2', border: '1px solid #FCA5A5', marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+                <IcAlert sz={13} col={T.danger}/>
+                <span style={{ fontSize: 12.5, color: T.danger }}>{cancelErr}</span>
+              </div>
+            )}
+
+            {subLoading ? (
+              <div style={{ fontSize: 13, color: T.textM, padding: '8px 0' }}>Loading…</div>
+            ) : projects.length === 0 ? (
+              <div style={{ fontSize: 13, color: T.textM, padding: '8px 0' }}>No active subscriptions.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {projects.map(p => (
+                  <div key={p.id} style={{ padding: '14px 16px', borderRadius: 12, border: `1px solid ${T.border}`, background: T.elevated }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: confirmId === p.id ? 12 : 0 }}>
+                      <IcGlobe sz={14} col={T.textM}/>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: T.text, flex: 1 }}>{p.name}</span>
+                      <StatusBadge s="active"/>
+                      {confirmId !== p.id && (
+                        <button onClick={() => setConfirmId(p.id)}
+                          style={{ fontSize: 11.5, color: T.danger, background: 'none', cursor: 'pointer', fontFamily: 'var(--font-app)', fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: `1px solid ${T.danger}30` }}>
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+
+                    {confirmId === p.id && (
+                      <div style={{ padding: '12px 14px', background: '#FEF2F2', borderRadius: 10, border: '1px solid #FCA5A5' }}>
+                        <div style={{ fontSize: 12.5, fontWeight: 700, color: T.danger, marginBottom: 4 }}>Cancel this subscription?</div>
+                        <div style={{ fontSize: 12, color: T.textS, marginBottom: 12, lineHeight: 1.55 }}>
+                          No further monthly charges for <strong>{p.name}</strong>. Takes effect immediately.
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <Btn sz="sm" variant="outline" onClick={() => setConfirmId(null)} disabled={cancelling === p.id}>Keep it</Btn>
+                          <Btn sz="sm" variant="danger" onClick={() => cancelSubscription(p.id)} disabled={cancelling === p.id}>
+                            {cancelling === p.id ? 'Cancelling…' : 'Yes, cancel'}
+                          </Btn>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ fontSize: 11, color: T.textM, marginTop: 12, lineHeight: 1.6 }}>
+              Cancelling stops future charges immediately. Your project details remain visible. To remove stored card details, contact{' '}
+              <a href="mailto:support@websyncdigital.com.ng" style={{ color: T.textM, textDecoration: 'underline' }}>support@websyncdigital.com.ng</a>.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
