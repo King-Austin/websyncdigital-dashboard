@@ -112,15 +112,44 @@ export async function POST(request: Request) {
     }
 
     case 'subscription.create': {
-      const email = event.data.customer?.email;
-      const code  = event.data.subscription_code;
+      const email   = event.data.customer?.email;
+      const code    = event.data.subscription_code;
+      const cCode   = event.data.customer?.customer_code ?? null;
+      const planCode = event.data.plan?.plan_code ?? null;
+
+      // Best-effort: stamp subscription_code onto the project so cancel works later.
+      // Match by customer_code first (most reliable), fall back to email.
+      if (code) {
+        let matched = false;
+        if (cCode) {
+          const { data: updated } = await supabase
+            .from('ws_projects')
+            .update({ paystack_subscription_code: code, paystack_customer_code: cCode, updated_at: new Date().toISOString() })
+            .eq('paystack_customer_code', cCode)
+            .eq('status', 'active')
+            .select('id');
+          matched = (updated?.length ?? 0) > 0;
+        }
+        if (!matched && email) {
+          const profile = await findProfileByEmail(supabase, email);
+          if (profile) {
+            await supabase
+              .from('ws_projects')
+              .update({ paystack_subscription_code: code, updated_at: new Date().toISOString() })
+              .eq('client_id', profile.id)
+              .eq('status', 'active')
+              .is('paystack_subscription_code', null);
+          }
+        }
+      }
+
       if (email) {
         const profile = await findProfileByEmail(supabase, email);
         if (profile) {
           await supabase.from('ws_notifications').insert({
             client_id: profile.id,
             type: 'billing',
-            message: `Subscription activated (${code}). Your monthly retainer is now set up.`,
+            message: `Subscription activated (${code ?? planCode}). Your monthly retainer is now set up.`,
           });
         }
       }

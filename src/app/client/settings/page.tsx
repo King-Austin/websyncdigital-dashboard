@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { T } from '@/lib/theme';
 import { Card, Btn, Input, StatusBadge } from '@/components/ui';
 import { Avatar } from '@/components/ui';
-import { IcCheck, IcAlert, IcShield, IcGlobe } from '@/components/ui/Icons';
+import { IcCheck, IcAlert, IcShield, IcGlobe, IcCard } from '@/components/ui/Icons';
 import type { Project } from '@/types';
 
 interface Profile {
@@ -48,17 +48,21 @@ export default function ClientSettings() {
   async function cancelSubscription(projectId: string) {
     setCancelling(projectId);
     setCancelErr(null);
-    const res = await fetch('/api/paystack/cancel-subscription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: projectId }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      setCancelled(prev => [...prev, projectId]);
-      setProjects(ps => ps.filter(p => p.id !== projectId));
-    } else {
-      setCancelErr(data.error || 'Could not cancel. Please try again or contact support.');
+    try {
+      const res = await fetch('/api/paystack/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setCancelled(prev => [...prev, projectId]);
+        setProjects(ps => ps.filter(p => p.id !== projectId));
+      } else {
+        setCancelErr(data.error || 'Could not cancel. Please try again or contact support.');
+      }
+    } catch {
+      setCancelErr('Network error. Please check your connection and try again.');
     }
     setCancelling(null);
     setConfirmId(null);
@@ -183,6 +187,35 @@ export default function ClientSettings() {
         ))}
       </Card>
 
+      {/* ── Cancel confirmation overlay ─────────────────────────────────────── */}
+      {confirmId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}
+          onClick={e => { if (e.target === e.currentTarget && !cancelling) setConfirmId(null); }}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 16px 48px rgba(12,26,46,0.18)', border: `1px solid ${T.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: T.danger + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IcAlert sz={20} col={T.danger}/>
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>Cancel subscription?</div>
+                <div style={{ fontSize: 12, color: T.textS, marginTop: 2 }}>{projects.find(p => p.id === confirmId)?.name}</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 13, color: T.textS, lineHeight: 1.65, marginBottom: 22, padding: '12px 14px', background: '#FEF2F2', borderRadius: 10, border: '1px solid #FCA5A5' }}>
+              No further monthly charges for this project. Takes effect immediately with Paystack — your project details remain visible.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Btn variant="outline" onClick={() => setConfirmId(null)} disabled={!!cancelling} style={{ flex: 1, justifyContent: 'center' }}>
+                Keep it
+              </Btn>
+              <Btn variant="danger" onClick={() => cancelSubscription(confirmId)} disabled={!!cancelling} style={{ flex: 1, justifyContent: 'center' }}>
+                {cancelling ? 'Cancelling…' : 'Yes, cancel'}
+              </Btn>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Danger zone — collapsed, low visibility */}
       <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 18 }}>
         <button
@@ -213,32 +246,15 @@ export default function ClientSettings() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {projects.map(p => (
                   <div key={p.id} style={{ padding: '14px 16px', borderRadius: 12, border: `1px solid ${T.border}`, background: T.elevated }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: confirmId === p.id ? 12 : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <IcGlobe sz={14} col={T.textM}/>
                       <span style={{ fontSize: 13, fontWeight: 600, color: T.text, flex: 1 }}>{p.name}</span>
                       <StatusBadge s="active"/>
-                      {confirmId !== p.id && (
-                        <button onClick={() => setConfirmId(p.id)}
-                          style={{ fontSize: 11.5, color: T.danger, background: 'none', cursor: 'pointer', fontFamily: 'var(--font-app)', fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: `1px solid ${T.danger}30` }}>
-                          Cancel
-                        </button>
-                      )}
+                      <button onClick={() => setConfirmId(p.id)} disabled={!!cancelling}
+                        style={{ fontSize: 11.5, color: T.danger, background: 'none', cursor: cancelling ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-app)', fontWeight: 600, padding: '3px 8px', borderRadius: 6, border: `1px solid ${T.danger}30`, opacity: cancelling ? 0.5 : 1 }}>
+                        Cancel
+                      </button>
                     </div>
-
-                    {confirmId === p.id && (
-                      <div style={{ padding: '12px 14px', background: '#FEF2F2', borderRadius: 10, border: '1px solid #FCA5A5' }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: T.danger, marginBottom: 4 }}>Cancel this subscription?</div>
-                        <div style={{ fontSize: 12, color: T.textS, marginBottom: 12, lineHeight: 1.55 }}>
-                          No further monthly charges for <strong>{p.name}</strong>. Takes effect immediately.
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <Btn sz="sm" variant="outline" onClick={() => setConfirmId(null)} disabled={cancelling === p.id}>Keep it</Btn>
-                          <Btn sz="sm" variant="danger" onClick={() => cancelSubscription(p.id)} disabled={cancelling === p.id}>
-                            {cancelling === p.id ? 'Cancelling…' : 'Yes, cancel'}
-                          </Btn>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

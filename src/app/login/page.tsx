@@ -33,13 +33,15 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
+    setLoading(true);
     setError('');
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${getURL()}/auth/callback` },
     });
-    if (err) setError(err.message);
+    if (err) { setError(err.message); setLoading(false); }
+    // on success the browser redirects — loading stays true intentionally
   }
 
   return (
@@ -148,7 +150,7 @@ export default function LoginPage() {
                 <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.16)' }} />or<div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.16)' }} />
               </div>
 
-              <button type="button" onClick={handleGoogle} style={{ width: '100%', padding: 12, background: '#fff', color: '#141310', border: '1.5px solid rgba(0,0,0,0.16)', borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-app)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}>
+              <button type="button" onClick={handleGoogle} disabled={loading} style={{ width: '100%', padding: 12, background: '#fff', color: '#141310', border: '1.5px solid rgba(0,0,0,0.16)', borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: 'var(--font-app)', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s', opacity: loading ? 0.6 : 1 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>

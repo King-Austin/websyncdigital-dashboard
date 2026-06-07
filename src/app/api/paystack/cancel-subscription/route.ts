@@ -31,14 +31,51 @@ export async function POST(request: Request) {
   if (project.status !== 'active') {
     return NextResponse.json({ error: 'Project is not currently active' }, { status: 400 });
   }
-  if (!project.paystack_subscription_code) {
-    // No Paystack subscription stored — just mark cancelled in DB (edge case: manual activation)
-    await admin.from('ws_projects').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', project_id);
-    return NextResponse.json({ ok: true });
+  let subscriptionCode = project.paystack_subscription_code;
+
+  // If we don't have a subscription code stored (e.g. project was manually activated),
+  // try to find the active subscription on Paystack by customer code or email.
+  if (!subscriptionCode) {
+    const planCode = process.env.NEXT_PUBLIC_PAYSTACK_PLAN_CODE;
+
+    // Try customer_code first
+    if (project.paystack_customer_code) {
+      const listRes = await fetch(
+        `${PS_BASE}/subscription?customer=${project.paystack_customer_code}&plan=${planCode}&status=active`,
+        { headers: { Authorization: `Bearer ${secret}` } }
+      );
+      const listJson = await listRes.json();
+      subscriptionCode = listJson?.data?.[0]?.subscription_code ?? null;
+    }
+
+    // Fall back to looking up by email
+    if (!subscriptionCode) {
+      const { data: profile } = await admin.from('ws_profiles').select('email').eq('id', project.client_id).single();
+      const email = profile?.email;
+      if (email) {
+        const listRes = await fetch(
+          `${PS_BASE}/subscription?plan=${planCode}&status=active`,
+          { headers: { Authorization: `Bearer ${secret}` } }
+        );
+        const listJson = await listRes.json();
+        const match = listJson?.data?.find((s: any) => s.customer?.email === email);
+        subscriptionCode = match?.subscription_code ?? null;
+        if (subscriptionCode) {
+          // Save it so future cancels don't need to search
+          await admin.from('ws_projects').update({ paystack_subscription_code: subscriptionCode }).eq('id', project_id);
+        }
+      }
+    }
+
+    // Truly no subscription on Paystack — safe to just mark cancelled
+    if (!subscriptionCode) {
+      await admin.from('ws_projects').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', project_id);
+      return NextResponse.json({ ok: true });
+    }
   }
 
   // Fetch subscription from Paystack to get the email_token required for disable
-  const subRes = await fetch(`${PS_BASE}/subscription/${project.paystack_subscription_code}`, {
+  const subRes = await fetch(`${PS_BASE}/subscription/${subscriptionCode}`, {
     headers: { Authorization: `Bearer ${secret}` },
   });
   const subJson = await subRes.json();
@@ -53,7 +90,7 @@ export async function POST(request: Request) {
   const disableRes = await fetch(`${PS_BASE}/subscription/disable`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${secret}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: project.paystack_subscription_code, token: emailToken }),
+    body: JSON.stringify({ code: subscriptionCode, token: emailToken }),
   });
   const disableJson = await disableRes.json();
 

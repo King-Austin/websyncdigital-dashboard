@@ -35,17 +35,21 @@ export default function BillingPage() {
   async function cancelSubscription(projectId: string) {
     setCancelling(projectId);
     setError(null);
-    const res = await fetch('/api/paystack/cancel-subscription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ project_id: projectId }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      setDone(prev => [...prev, projectId]);
-      setProjects(ps => ps.map(p => p.id === projectId ? { ...p, status: 'cancelled' } : p));
-    } else {
-      setError(data.error || 'Could not cancel. Please try again or contact support.');
+    try {
+      const res = await fetch('/api/paystack/cancel-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setDone(prev => [...prev, projectId]);
+        setProjects(ps => ps.map(p => p.id === projectId ? { ...p, status: 'cancelled' } : p));
+      } else {
+        setError(data.error || 'Could not cancel. Please try again or contact support.');
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
     }
     setCancelling(null);
     setConfirmId(null);
@@ -134,27 +138,9 @@ export default function BillingPage() {
                         </div>
                       </div>
 
-                      {/* Cancel flow */}
-                      {confirmId === p.id ? (
-                        <div style={{ padding: '12px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, marginBottom: 4 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: T.danger, marginBottom: 6 }}>Cancel this subscription?</div>
-                          <div style={{ fontSize: 12.5, color: T.textS, marginBottom: 12, lineHeight: 1.55 }}>
-                            Your card will not be charged again for <strong>{p.name}</strong>. This takes effect immediately with Paystack — no further monthly debits will occur.
-                          </div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <Btn sz="sm" variant="outline" onClick={() => setConfirmId(null)} disabled={cancelling === p.id}>
-                              Keep subscription
-                            </Btn>
-                            <Btn sz="sm" variant="danger" onClick={() => cancelSubscription(p.id)} disabled={cancelling === p.id}>
-                              {cancelling === p.id ? 'Cancelling…' : 'Yes, cancel it'}
-                            </Btn>
-                          </div>
-                        </div>
-                      ) : (
-                        <Btn sz="sm" variant="ghost" onClick={() => setConfirmId(p.id)} style={{ color: T.danger, border: `1px solid ${T.danger}30` }}>
-                          Cancel subscription
-                        </Btn>
-                      )}
+                      <Btn sz="sm" variant="ghost" onClick={() => setConfirmId(p.id)} disabled={!!cancelling} style={{ color: T.danger, border: `1px solid ${T.danger}30` }}>
+                        Cancel subscription
+                      </Btn>
                     </div>
                   </div>
                 </Card>
@@ -190,6 +176,35 @@ export default function BillingPage() {
             </>
           )}
         </>
+      )}
+
+      {/* ── Cancel confirmation overlay ─────────────────────────────────────── */}
+      {confirmId && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}
+          onClick={e => { if (e.target === e.currentTarget && !cancelling) setConfirmId(null); }}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 16px 48px rgba(12,26,46,0.18)', border: `1px solid ${T.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: T.danger + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IcAlert sz={20} col={T.danger}/>
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>Cancel subscription?</div>
+                <div style={{ fontSize: 12, color: T.textS, marginTop: 2 }}>{projects.find(p => p.id === confirmId)?.name}</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 13, color: T.textS, lineHeight: 1.65, marginBottom: 22, padding: '12px 14px', background: '#FEF2F2', borderRadius: 10, border: '1px solid #FCA5A5' }}>
+              Your card will <strong>not</strong> be charged again for this project. This takes effect immediately with Paystack — no further monthly debits will occur.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Btn variant="outline" onClick={() => setConfirmId(null)} disabled={!!cancelling} style={{ flex: 1, justifyContent: 'center' }}>
+                Keep subscription
+              </Btn>
+              <Btn variant="danger" onClick={() => cancelSubscription(confirmId)} disabled={!!cancelling} style={{ flex: 1, justifyContent: 'center' }}>
+                {cancelling ? 'Cancelling…' : 'Yes, cancel it'}
+              </Btn>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

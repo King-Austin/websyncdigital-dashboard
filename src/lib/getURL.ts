@@ -9,9 +9,13 @@
 // Configuration → Redirect URLs, or Supabase will ignore it and fall back to the
 // project's Site URL.
 export function getURL(): string {
-  let url =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
-  // Strip a trailing slash so callers can append `/auth/callback` cleanly.
+  // In the browser, always use the actual origin so local dev redirects land on
+  // localhost rather than the production domain (NEXT_PUBLIC_APP_URL is for
+  // server-side use and email templates, not OAuth redirectTo).
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  const url =
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   return url.replace(/\/+$/, '');
 }

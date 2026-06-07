@@ -21,14 +21,20 @@ const blank = { name: '', company: '', phone: '', status: 'active' };
 export default function AdminClients() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving]   = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [modal, setModal]     = useState(false);
   const [editId, setEditId]   = useState<string | null>(null);
   const [search, setSearch]   = useState('');
   const [form, setForm]       = useState(blank);
+  const [formErr, setFormErr] = useState('');
   const upd = (k: keyof typeof blank) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    fetch('/api/clients').then(r => r.json()).then(d => { setClients(d); setLoading(false); });
+    fetch('/api/clients')
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => { setClients(Array.isArray(d) ? d : []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   const filtered = clients.filter(c =>
@@ -36,25 +42,45 @@ export default function AdminClients() {
     (c.company || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const openAdd  = () => { setEditId(null); setForm(blank); setModal(true); };
-  const openEdit = (c: ClientRow) => { setEditId(c.id); setForm({ name: c.name || '', company: c.company || '', phone: c.phone || '', status: 'active' }); setModal(true); };
+  const openAdd  = () => { setEditId(null); setForm(blank); setFormErr(''); setModal(true); };
+  const openEdit = (c: ClientRow) => { setEditId(c.id); setForm({ name: c.name || '', company: c.company || '', phone: c.phone || '', status: 'active' }); setFormErr(''); setModal(true); };
 
   const handleDel = async (id: string) => {
-    await fetch(`/api/clients/${id}`, { method: 'DELETE' });
-    setClients(cs => cs.filter(c => c.id !== id));
+    if (!confirm('Delete this client? This cannot be undone.')) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setClients(cs => cs.filter(c => c.id !== id));
+      } else {
+        alert('Could not delete client. Please try again.');
+      }
+    } catch {
+      alert('Network error. Please check your connection and try again.');
+    }
+    setDeleting(null);
   };
 
   const handleSave = async () => {
-    if (editId) {
-      const res = await fetch(`/api/clients/${editId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const updated = await res.json();
-      setClients(cs => cs.map(c => c.id === editId ? { ...c, ...updated } : c));
-    } else {
-      const res = await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const created = await res.json();
-      setClients(cs => [created, ...cs]);
+    setSaving(true);
+    setFormErr('');
+    try {
+      if (editId) {
+        const res = await fetch(`/api/clients/${editId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        if (!res.ok) { setFormErr('Could not update client. Please try again.'); setSaving(false); return; }
+        const updated = await res.json();
+        setClients(cs => cs.map(c => c.id === editId ? { ...c, ...updated } : c));
+      } else {
+        const res = await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        if (!res.ok) { setFormErr('Could not add client. Please try again.'); setSaving(false); return; }
+        const created = await res.json();
+        setClients(cs => [created, ...cs]);
+      }
+      setModal(false);
+    } catch {
+      setFormErr('Network error. Please check your connection and try again.');
     }
-    setModal(false);
+    setSaving(false);
   };
 
   if (loading) return <div style={{ color: T.textS, fontSize: 13, padding: 24 }}>Loading clients…</div>;
@@ -86,8 +112,8 @@ export default function AdminClients() {
                 <td style={{ padding: '13px 16px', fontSize: 14, fontWeight: 700, color: T.text, textAlign: 'center' }}>{c.ws_websites?.[0]?.count ?? 0}</td>
                 <td style={{ padding: '13px 16px' }}>
                   <Row>
-                    <Btn sz="sm" variant="ghost" onClick={() => openEdit(c)}><IcEdit sz={12}/></Btn>
-                    <Btn sz="sm" variant="ghost" style={{ color: T.danger }} onClick={() => handleDel(c.id)}><IcTrash sz={12}/></Btn>
+                    <Btn sz="sm" variant="ghost" onClick={() => openEdit(c)} disabled={deleting === c.id}><IcEdit sz={12}/></Btn>
+                    <Btn sz="sm" variant="ghost" style={{ color: T.danger }} onClick={() => handleDel(c.id)} disabled={deleting === c.id}>{deleting === c.id ? '…' : <IcTrash sz={12}/>}</Btn>
                     <Btn sz="sm" variant="ghost"><IcMail sz={12}/></Btn>
                   </Row>
                 </td>
@@ -99,15 +125,16 @@ export default function AdminClients() {
         </div>
       </Card>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={editId ? 'Edit Client' : 'Add New Client'}>
+      <Modal open={modal} onClose={() => { if (!saving) setModal(false); }} title={editId ? 'Edit Client' : 'Add New Client'}>
+        {formErr && <div style={{ padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, fontSize: 13, color: '#DC2626', marginBottom: 12 }}>{formErr}</div>}
         <div className="modal-form-grid" style={{ gap: 0 }}>
           <Input label="Full Name"    value={form.name}    onChange={upd('name')}    placeholder="e.g. Amaka Okonkwo" required/>
           <Input label="Company Name" value={form.company} onChange={upd('company')} placeholder="e.g. Lagos Bakery"/>
           <Input label="Phone Number" value={form.phone}   onChange={upd('phone')}   placeholder="+234 801 234 5678"/>
         </div>
         <Row style={{ justifyContent: 'flex-end', marginTop: 8 }}>
-          <Btn variant="outline" onClick={() => setModal(false)}>Cancel</Btn>
-          <Btn disabled={!form.name} onClick={handleSave}><IcCheck sz={13}/>{editId ? 'Update Client' : 'Add Client'}</Btn>
+          <Btn variant="outline" onClick={() => setModal(false)} disabled={saving}>Cancel</Btn>
+          <Btn disabled={!form.name || saving} onClick={handleSave}><IcCheck sz={13}/>{saving ? 'Saving…' : editId ? 'Update Client' : 'Add Client'}</Btn>
         </Row>
       </Modal>
     </div>

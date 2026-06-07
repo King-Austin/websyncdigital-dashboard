@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { T } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Btn, Input, Textarea, StatusBadge } from '@/components/ui';
@@ -18,21 +18,8 @@ export default function ClientProjects() {
   );
 }
 
-// Load Paystack Inline JS once and resolve when ready
-function loadPaystackInline(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') return reject();
-    if ((window as any).PaystackPop) return resolve();
-    const s = document.createElement('script');
-    s.src = 'https://js.paystack.co/v1/inline.js';
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error('Could not load Paystack'));
-    document.head.appendChild(s);
-  });
-}
 
 function ProjectsInner() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -60,16 +47,21 @@ function ProjectsInner() {
 
   async function payInvoice(invoiceId: string) {
     setPayingInv(invoiceId);
-    const res = await fetch('/api/paystack/initialize-invoice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invoice_id: invoiceId }),
-    });
-    const data = await res.json();
-    if (data.authorization_url) {
-      window.location.href = data.authorization_url;
-    } else {
-      alert(data.error || 'Could not start payment. Please try again.');
+    try {
+      const res = await fetch('/api/paystack/initialize-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_id: invoiceId }),
+      });
+      const data = await res.json();
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        alert(data.error || 'Could not start payment. Please try again.');
+        setPayingInv(null);
+      }
+    } catch {
+      alert('Network error. Please check your connection and try again.');
       setPayingInv(null);
     }
   }
@@ -95,40 +87,20 @@ function ProjectsInner() {
   async function startPayment(projectId: string) {
     setPaying(projectId);
     try {
-      await loadPaystackInline();
-
       const res = await fetch('/api/paystack/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ project_id: projectId }),
       });
       const data = await res.json();
-
-      if (!data.access_code) {
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
         alert(data.error || 'Could not start payment. Please try again.');
         setPaying(null);
-        return;
       }
-
-      const handler = (window as any).PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        email: data.email,
-        access_code: data.access_code,
-        onSuccess: () => {
-          setJustPaid(projectId);
-          setPaying(null);
-          // Poll a couple times — webhook may take a moment
-          setTimeout(load, 1500);
-          setTimeout(load, 4000);
-          router.replace('/client/projects?paid=' + projectId);
-        },
-        onCancel: () => {
-          setPaying(null);
-        },
-      });
-      handler.openIframe();
     } catch {
-      alert('Could not load payment. Please try again.');
+      alert('Network error. Please check your connection and try again.');
       setPaying(null);
     }
   }
@@ -310,7 +282,7 @@ function ProjectsInner() {
       {confirmProject && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}
           onClick={e => { if (e.target === e.currentTarget) setConfirmProject(null); }}>
-          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%', boxShadow: '0 16px 48px rgba(12,26,46,0.18)', border: `1px solid ${T.border}` }}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 16px 48px rgba(12,26,46,0.18)', border: `1px solid ${T.border}` }}>
             {/* Icon + title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: T.accent + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
