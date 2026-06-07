@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
   const { data: project } = await admin
     .from('ws_projects')
-    .select('id, name, client_id, status, paystack_subscription_code')
+    .select('id, name, client_id, status, paystack_subscription_code, paystack_customer_code')
     .eq('id', project_id)
     .single();
 
