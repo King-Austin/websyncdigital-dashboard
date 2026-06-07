@@ -88,5 +88,8 @@ export async function POST(request: Request) {
     .eq('id', project.id)
     .eq('status', 'submitted'); // only from submitted, never downgrade an active one
 
-  return NextResponse.json({ authorization_url: json.data.authorization_url });
+  return NextResponse.json({
+    authorization_url: json.data.authorization_url,
+    access_code: json.data.access_code,
+  });
 }
