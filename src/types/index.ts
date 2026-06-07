@@ -76,7 +76,7 @@ export interface RevData {
   r: number;
 }
 
-export type ProjectStatus = 'submitted' | 'active' | 'cancelled';
+export type ProjectStatus = 'submitted' | 'processing' | 'active' | 'cancelled';
 
 export interface ProjectFile {
   id: string;
@@ -84,6 +84,21 @@ export interface ProjectFile {
   kind: 'logo' | 'image';
   path: string;
   url?: string;          // signed URL, filled in when fetched
+}
+
+export type InvoiceKind = 'domain' | 'email' | 'other';
+
+export interface WsInvoice {
+  id: string;
+  description?: string;
+  amount: number;            // in kobo
+  due_date?: string;
+  status: 'unpaid' | 'paid' | 'overdue';
+  client_id: string;
+  project_id?: string | null;
+  kind?: InvoiceKind | null;
+  paystack_reference?: string | null;
+  created_at: string;
 }
 
 export interface Project {

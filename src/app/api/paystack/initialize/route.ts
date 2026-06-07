@@ -14,6 +14,17 @@ export async function POST(request: Request) {
   if (!secret)   return NextResponse.json({ error: 'Paystack not configured' }, { status: 500 });
   if (!planCode) return NextResponse.json({ error: 'Plan code not configured' }, { status: 500 });
 
+  // Paystack's /transaction/initialize requires `amount` (in kobo) even when a
+  // plan is supplied. Fetch the plan's amount so the two always match.
+  const planRes  = await fetch(`${PS_BASE}/plan/${planCode}`, {
+    headers: { Authorization: `Bearer ${secret}` },
+  });
+  const planJson = await planRes.json();
+  const planAmount = planJson?.data?.amount;
+  if (!planAmount) {
+    return NextResponse.json({ error: 'Could not read plan amount from Paystack' }, { status: 502 });
+  }
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
@@ -52,6 +63,7 @@ export async function POST(request: Request) {
     },
     body: JSON.stringify({
       email,
+      amount: planAmount,
       plan: planCode,
       callback_url: `${appUrl}/client/projects?paid=${project_id}`,
       metadata: {
@@ -66,6 +78,15 @@ export async function POST(request: Request) {
   if (!json.status) {
     return NextResponse.json({ error: json.message || 'Paystack error' }, { status: 502 });
   }
+
+  // Mark the project as 'processing' the moment checkout starts, so the client
+  // sees it's in progress and isn't tempted to pay again. The webhook flips it
+  // to 'active' on confirmed payment (or it stays processing if they abandon).
+  await admin
+    .from('ws_projects')
+    .update({ status: 'processing', updated_at: new Date().toISOString() })
+    .eq('id', project.id)
+    .eq('status', 'submitted'); // only from submitted, never downgrade an active one
 
   return NextResponse.json({ authorization_url: json.data.authorization_url });
 }

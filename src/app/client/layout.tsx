@@ -7,7 +7,7 @@ export default async function ClientLayout({ children }: { children: React.React
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('ws_profiles').select('*').eq('id', user.id).single();
 
   return (
     <ClientDashboardWrapper user={user} profile={profile}>

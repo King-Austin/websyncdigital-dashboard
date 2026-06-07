@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { ThemeProvider } from '@/lib/ThemeProvider';
 import { Sidebar, PageHeader, NavItem } from '@/components/layout/Sidebar';
-import { IcHome, IcGlobe, IcBar, IcFile, IcCard, IcBell, IcBriefcase } from '@/components/ui/Icons';
+import { BottomNav } from '@/components/layout/BottomNav';
+import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog } from '@/components/ui/Icons';
 
 const CLIENT_NAV: NavItem[] = [
   { k: '/client',              label: 'Overview',           icon: <IcHome /> },
@@ -14,10 +15,8 @@ const CLIENT_NAV: NavItem[] = [
   { k: '/client/websites',     label: 'My Websites',        icon: <IcGlobe /> },
   { k: '/client/metrics',      label: 'Metrics',            icon: <IcBar /> },
   { k: 'd1', divider: true },
-  { k: '/client/billing',      label: 'Billing & Invoices', icon: <IcFile /> },
-  { k: '/client/subscription', label: 'Subscription',       icon: <IcCard /> },
-  { k: 'd2', divider: true },
-  { k: '/client/notifications', label: 'Notifications',     icon: <IcBell />, badge: 2 },
+  { k: '/client/notifications', label: 'Notifications',     icon: <IcBell /> },
+  { k: '/client/settings',     label: 'Settings',           icon: <IcCog /> },
 ];
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
@@ -25,9 +24,8 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/client/projects':      { title: 'My Projects',        sub: 'Create a project and submit your brief' },
   '/client/websites':      { title: 'My Websites',        sub: 'Your active sites' },
   '/client/metrics':       { title: 'Website Metrics',    sub: 'Traffic, SEO and performance' },
-  '/client/billing':       { title: 'Billing & Invoices', sub: '₦9,999/month retainer' },
-  '/client/subscription':  { title: 'Subscription',       sub: 'Manage your Websync plan' },
   '/client/notifications': { title: 'Notifications',      sub: 'Your recent alerts' },
+  '/client/settings':      { title: 'Settings',           sub: 'Manage your profile and account' },
 };
 
 interface Props {
@@ -54,6 +52,8 @@ export default function ClientDashboardWrapper({ children, user, profile }: Prop
           .ws-main { margin-left: 0 !important; }
           .ws-overlay { display: block !important; }
           .ws-menu-btn { display: flex !important; }
+          /* clear the fixed bottom nav so content isn't hidden behind it */
+          .ws-main-content { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
         }
       `}</style>
 
@@ -79,15 +79,20 @@ export default function ClientDashboardWrapper({ children, user, profile }: Prop
               <IcBell sz={16} col={T.textS} />
               <span style={{ position: 'absolute', top: 8, right: 8, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />
             </Link>
-            <Link href="/admin" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-              Admin View →
-            </Link>
+            {/* Only admins (browsing the client view) see the way back. Real clients never do. */}
+            {profile?.role === 'admin' && (
+              <Link href="/admin" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                Admin View →
+              </Link>
+            )}
           </>
         }/>
-        <main style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
+        <main className="ws-main-content" style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
           {children}
         </main>
       </div>
+
+      <BottomNav />
     </div>
     </ThemeProvider>
   );

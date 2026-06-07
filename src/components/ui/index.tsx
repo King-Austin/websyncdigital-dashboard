@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { T, ini } from '@/lib/theme';
 
 // ── DOT ──────────────────────────────────────────────────────────────────────
@@ -59,6 +60,9 @@ const STATUS_MAP: Record<string, [string, string]> = {
   down:        [T.danger,  'Down'],
   active:      [T.success, 'Active'],
   pending:     [T.warn,    'Pending'],
+  processing:  [T.info,    'Processing'],
+  submitted:   [T.warn,    'Submitted'],
+  cancelled:   [T.danger,  'Cancelled'],
   inactive:    [T.textS,   'Inactive'],
   open:        [T.danger,  'Open'],
   resolved:    [T.success, 'Resolved'],
@@ -170,34 +174,40 @@ export const Sel = ({ label, value, onChange, opts }: { label?: string; value: s
 // ── MODAL ─────────────────────────────────────────────────────────────────────
 import { IcX } from './Icons';
 
-export const Modal = ({ open, onClose, title, children, w = 520 }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode; w?: number }) => {
-  if (!open) return null;
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.4)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', backdropFilter: 'blur(4px)' }}
+export const Modal = ({ open, onClose, title, children, w = 760 }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode; w?: number }) => {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => { setMounted(true); }, []);
+  React.useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}
       className="modal-backdrop"
       onClick={e => e.target === e.currentTarget && onClose()}>
       <style>{`
         @media (min-width: 640px) {
-          .modal-backdrop { align-items: center !important; padding: 20px !important; }
-          .modal-sheet { border-radius: 18px !important; max-height: 88vh !important; width: var(--modal-w) !important; margin-bottom: 0 !important; }
+          .modal-backdrop { padding: 24px !important; }
+          .modal-sheet { width: var(--modal-w) !important; }
           .modal-form-grid { grid-template-columns: 1fr 1fr !important; }
-          .grid4-resp { grid-template-columns: repeat(4,1fr) !important; }
-          .grid2-resp { grid-template-columns: 1fr 1fr !important; }
         }
         .modal-sheet { overflow-y: auto; }
         .modal-form-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
-        .grid4-resp { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 22px; }
-        .grid2-resp { display: grid; grid-template-columns: 1fr; gap: 18px; }
       `}</style>
-      <div className="modal-sheet" style={{ '--modal-w': `${w}px`, background: '#FFFFFF', border: `1px solid ${T.border}`, borderRadius: '18px 18px 0 0', width: '100%', maxWidth: '100vw', maxHeight: '92vh', padding: 24, boxShadow: '0 -8px 40px rgba(12,26,46,0.18)' } as React.CSSProperties}>
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: T.border, margin: '0 auto 20px', display: 'block' }} className="modal-handle sm-hidden"/>
+      <div className="modal-sheet" style={{ '--modal-w': `${w}px`, background: '#FFFFFF', border: `1px solid ${T.border}`, borderRadius: 18, width: '100%', maxWidth: '100%', maxHeight: '90vh', padding: 28, boxShadow: '0 12px 40px rgba(12,26,46,0.18)' } as React.CSSProperties}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{title}</h3>
           <button onClick={onClose} style={{ background: T.elevated, border: `1px solid ${T.border}`, cursor: 'pointer', color: T.textS, padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}><IcX sz={16} /></button>
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -150,6 +150,9 @@ CREATE TABLE IF NOT EXISTS ws_notifications (
 ALTER TABLE ws_profiles ADD COLUMN IF NOT EXISTS email TEXT;
 -- Add paystack_reference to ws_invoices for reconciliation
 ALTER TABLE ws_invoices ADD COLUMN IF NOT EXISTS paystack_reference TEXT;
+-- Link add-on invoices (domain / business email) to a project + tag the kind
+ALTER TABLE ws_invoices ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES ws_projects(id) ON DELETE SET NULL;
+ALTER TABLE ws_invoices ADD COLUMN IF NOT EXISTS kind TEXT;
 
 ALTER TABLE ws_payments       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_projects       ENABLE ROW LEVEL SECURITY;
@@ -162,67 +165,88 @@ ALTER TABLE ws_ticket_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_portfolio      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ws_notifications  ENABLE ROW LEVEL SECURITY;
 
+-- Admin check helper: SECURITY DEFINER so it reads ws_profiles WITHOUT triggering
+-- RLS. This is what prevents infinite recursion — a policy ON ws_profiles must never
+-- itself run a query that re-evaluates ws_profiles' policies. Use this everywhere
+-- instead of an inline `EXISTS (SELECT 1 FROM ws_profiles ...)`.
+CREATE OR REPLACE FUNCTION public.ws_is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.ws_profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+REVOKE ALL ON FUNCTION public.ws_is_admin() FROM public;
+GRANT EXECUTE ON FUNCTION public.ws_is_admin() TO authenticated;
+
 -- ws_profiles
 CREATE POLICY "ws_users_see_own_profile" ON ws_profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "ws_admins_see_all_profiles" ON ws_profiles FOR SELECT
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 CREATE POLICY "ws_users_update_own_profile" ON ws_profiles FOR UPDATE USING (auth.uid() = id);
 
 -- ws_websites
 CREATE POLICY "ws_clients_see_own_websites" ON ws_websites FOR SELECT
-  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (client_id = auth.uid() OR public.ws_is_admin());
 CREATE POLICY "ws_admins_manage_websites" ON ws_websites FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_invoices
 CREATE POLICY "ws_clients_see_own_invoices" ON ws_invoices FOR SELECT
-  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (client_id = auth.uid() OR public.ws_is_admin());
 CREATE POLICY "ws_admins_manage_invoices" ON ws_invoices FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_tickets
 CREATE POLICY "ws_clients_see_own_tickets" ON ws_tickets FOR SELECT
-  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (client_id = auth.uid() OR public.ws_is_admin());
 CREATE POLICY "ws_admins_manage_tickets" ON ws_tickets FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_ticket_messages
 CREATE POLICY "ws_ticket_msg_access" ON ws_ticket_messages FOR SELECT
   USING (EXISTS (
     SELECT 1 FROM ws_tickets t
     WHERE t.id = ticket_id
-    AND (t.client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'))
+    AND (t.client_id = auth.uid() OR public.ws_is_admin())
   ));
 CREATE POLICY "ws_admins_manage_ticket_messages" ON ws_ticket_messages FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_notifications
 CREATE POLICY "ws_clients_see_own_notifications" ON ws_notifications FOR SELECT
   USING (client_id = auth.uid());
+CREATE POLICY "ws_clients_update_own_notifications" ON ws_notifications FOR UPDATE
+  USING (client_id = auth.uid()) WITH CHECK (client_id = auth.uid());
 CREATE POLICY "ws_admins_manage_notifications" ON ws_notifications FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_portfolio
 CREATE POLICY "ws_public_portfolio_visible" ON ws_portfolio FOR SELECT
-  USING (visibility = 'public' OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (visibility = 'public' OR public.ws_is_admin());
 CREATE POLICY "ws_admins_manage_portfolio" ON ws_portfolio FOR ALL
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_payments (service role writes; admin can view)
 CREATE POLICY "ws_admins_see_payments" ON ws_payments FOR SELECT
-  USING (EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (public.ws_is_admin());
 
 -- ws_projects (clients manage their own; admins see all)
 CREATE POLICY "ws_clients_see_own_projects" ON ws_projects FOR SELECT
-  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (client_id = auth.uid() OR public.ws_is_admin());
 CREATE POLICY "ws_clients_insert_own_projects" ON ws_projects FOR INSERT
   WITH CHECK (client_id = auth.uid());
 CREATE POLICY "ws_clients_update_own_projects" ON ws_projects FOR UPDATE
-  USING (client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'));
+  USING (client_id = auth.uid() OR public.ws_is_admin());
 
 -- ws_project_files (same visibility as parent project)
 CREATE POLICY "ws_project_files_access" ON ws_project_files FOR SELECT
   USING (EXISTS (SELECT 1 FROM ws_projects p WHERE p.id = project_id
-    AND (p.client_id = auth.uid() OR EXISTS (SELECT 1 FROM ws_profiles WHERE id = auth.uid() AND role = 'admin'))));
+    AND (p.client_id = auth.uid() OR public.ws_is_admin())));
 CREATE POLICY "ws_project_files_insert" ON ws_project_files FOR INSERT
   WITH CHECK (EXISTS (SELECT 1 FROM ws_projects p WHERE p.id = project_id AND p.client_id = auth.uid()));

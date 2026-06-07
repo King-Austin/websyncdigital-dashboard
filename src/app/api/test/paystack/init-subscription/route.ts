@@ -33,13 +33,12 @@ export async function POST(request: NextRequest) {
 
     const payload: any = {
       customer: email,
-      plan: plan_code || 'PLN_default', // Ensure plan exists in your Paystack account
+      plan: plan_code || 'PLN_default',
       authorization: authorization_code,
       quantity,
       metadata,
     };
 
-    // If authorization_code not provided, we'll create a subscription that requires authorization
     if (!authorization_code) {
       delete payload.authorization;
     }

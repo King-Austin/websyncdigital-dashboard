@@ -6,7 +6,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('ws_profiles')
     .select(`
-      id, name, company, phone, role, created_at,
+      id, name, company, phone, email, role, created_at,
       ws_websites(count)
     `)
     .eq('role', 'client')

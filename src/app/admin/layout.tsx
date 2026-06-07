@@ -7,7 +7,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('ws_profiles').select('*').eq('id', user.id).single();
+
+  // Only admins may access the admin dashboard
+  if (profile?.role !== 'admin') redirect('/client');
 
   return (
     <AdminDashboardWrapper user={user} profile={profile}>

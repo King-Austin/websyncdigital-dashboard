@@ -1,38 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=DM+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-/* ── THEME SURFACES (light defaults) ───────────────────────────────────────── */
+/* ── RECIVO EDITORIAL THEME (applied globally) ──────────────────────────────────
+   DESIGN.md palette + fonts, with text contrast pushed BOLDER/DARKER than the spec
+   for maximum legibility (the spec greys were too soft to grab a reader fast).
+   These tokens drive every component that reads --ws-* / T.*. */
 :root {
-  --ws-bg:       #F4F7FB;
-  --ws-sidebar:  #FFFFFF;
-  --ws-card:     #FFFFFF;
-  --ws-elevated: #EDF2F8;
-  --ws-border:   #DDE5F0;
-  --ws-borderHi: #C5D4E8;
-  --ws-text:     #0C1A2E;
-  --ws-textS:    #5B728E;
-  --ws-textM:    #8FA9C4;
+  --ws-bg:       #ECEAE4;            /* warm cream page */
+  --ws-sidebar:  #F5F3ED;            /* surface */
+  --ws-card:     #FFFFFF;            /* raised */
+  --ws-elevated: #E4E2DC;            /* sunken — inputs */
+  --ws-border:   rgba(0,0,0,0.14);   /* stronger than spec 0.10 for definition */
+  --ws-borderHi: rgba(0,0,0,0.26);
+  --ws-accent:   #1F4A35;            /* editorial green */
+  --ws-accentD:  #2A6347;
+  --ws-purple:   #1F4A35;            /* kill purple — fold into green */
+
+  /* TEXT — darker & bolder than DESIGN.md for legibility */
+  --ws-text:     #141310;            /* near-black, warm (spec was #1C1C1A) */
+  --ws-textS:    #2E2C26;            /* secondary, much darker than spec #4A4A42 */
+  --ws-textM:    #555049;            /* muted, much darker than spec #7A7A70 */
+
+  /* Editorial aliases for the auth pages (login / register) */
+  --ed-green:    #1F4A35;
+  --ed-green-d:  #2A6347;
+  --ed-amber:    #B8902F;
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono:  'DM Mono', 'JetBrains Mono', monospace;
 }
 
 /* Dark overrides — applied when an ancestor has data-theme="dark" */
 [data-theme="dark"] {
-  --ws-bg:       #0B1220;
-  --ws-sidebar:  #111A2B;
-  --ws-card:     #131D30;
-  --ws-elevated: #1B273D;
-  --ws-border:   #25324B;
-  --ws-borderHi: #34456380;
-  --ws-text:     #E8EEF6;
-  --ws-textS:    #9FB1C9;
-  --ws-textM:    #6B7E99;
+  --ws-bg:       #0E0E0C;
+  --ws-sidebar:  #1A1A17;
+  --ws-card:     #242420;
+  --ws-elevated: #090907;
+  --ws-border:   rgba(255,255,255,0.10);
+  --ws-borderHi: rgba(255,255,255,0.18);
+  --ws-accent:   #D4A853;            /* amber leads on dark per DESIGN.md */
+  --ws-accentD:  #B8902F;
+  --ws-purple:   #D4A853;
+  --ws-text:     #F2EFE7;            /* brighter than spec for legibility */
+  --ws-textS:    #C8C4B8;
+  --ws-textM:    #948F82;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--ws-bg); font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: var(--ws-text); }
+html, body {
+  height: 100%;
+  background: var(--ws-bg);
+  font-family: var(--font-serif);
+  color: var(--ws-text);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;   /* never allow horizontal page scroll on mobile */
+}
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* ── EDITORIAL TYPE SYSTEM (global) ─────────────────────────────────────────────
+   Headings & display → serif, weight 600 (DESIGN.md caps at 600 — but we keep it
+   heavy enough to read as bold). UI chrome (buttons, inputs, labels) → DM Mono. */
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ws-text);
+}
+button, input, select, textarea {
+  font-family: var(--font-mono) !important;
+  letter-spacing: 0.01em;
+}
+/* Strip the heavy box-shadows the old blue theme baked into inline styles — editorial
+   uses borders, not equal-weight shadows. */
+[style*="box-shadow"] { box-shadow: none !important; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #C5D4E8; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #8FA9C4; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.38); }
 
 @keyframes ping {
   0%   { transform: scale(1); opacity: 0.5; }
@@ -57,14 +101,26 @@ table { width: 100%; }
 th, td { vertical-align: middle; }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #2563EB !important;
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
+  border-color: var(--ed-green) !important;
+  box-shadow: 0 0 0 3px rgba(31,74,53,0.14) !important;
   outline: none;
 }
 
 .fade-in { animation: fadeInUp 0.3s ease both; }
 
 /* ── RESPONSIVE ─────────────────────────────────────────────────────────────── */
+
+/* Stat / column grids — base desktop definitions (must live here, NOT only inside
+   the Modal component, or pages without a Modal lose the grid and stack full-width). */
+.grid4-resp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.grid3-resp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid2-resp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+
+@media (max-width: 900px) {
+  .grid4-resp { grid-template-columns: repeat(2, 1fr); }
+  .grid3-resp { grid-template-columns: repeat(2, 1fr); }
+  .grid2-resp { grid-template-columns: 1fr; }
+}
 
 /* Tables: horizontal scroll on mobile */
 .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -78,13 +134,13 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 639px) {
   /* Stat grids collapse to 2 cols */
   .grid4-resp { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .grid3-resp { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
   /* Two-column layout stacks */
   .grid2-resp { grid-template-columns: 1fr !important; gap: 14px !important; }
   /* Inline form grids inside modals go single column */
   .modal-form-grid { grid-template-columns: 1fr !important; }
-  /* Reduce card padding */
-  .fade-in > div { }
-  /* Tables scroll horizontally */
-  table { min-width: 560px; }
+  /* Tables scroll horizontally — only inside a scroll wrapper, so a wide table
+     never pushes the whole page wider than the viewport. */
   .card-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 14px; }
+  .card-table-wrap table { min-width: 560px; }
 }

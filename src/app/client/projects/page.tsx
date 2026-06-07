@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { T } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Btn, Input, Textarea, StatusBadge } from '@/components/ui';
-import { IcPlus, IcCard, IcCheck, IcGlobe } from '@/components/ui/Icons';
-import type { Project } from '@/types';
+import { IcPlus, IcCard, IcCheck, IcGlobe, IcEdit, IcTrash, IcBar, IcCog, IcMail, IcAlert } from '@/components/ui/Icons';
+import type { Project, WsInvoice } from '@/types';
 
 const BUCKET = 'ws-project-files';
 
@@ -25,27 +25,57 @@ function ProjectsInner() {
   const [showForm, setShowForm] = useState(false);
   const [paying, setPaying]     = useState<string | null>(null);
   const [justPaid, setJustPaid] = useState<string | null>(null);
+  const [editing, setEditing]   = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<WsInvoice[]>([]);
+  const [payingInv, setPayingInv] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/projects');
-    if (res.ok) setProjects(await res.json());
+    const [pRes, iRes] = await Promise.all([
+      fetch('/api/projects'),
+      fetch('/api/invoices'),
+    ]);
+    if (pRes.ok) setProjects(await pRes.json());
+    if (iRes.ok) setInvoices(await iRes.json());
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  // After returning from Paystack (?paid=<project_id>), show a confirmation + refresh
+  async function payInvoice(invoiceId: string) {
+    setPayingInv(invoiceId);
+    const res = await fetch('/api/paystack/initialize-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice_id: invoiceId }),
+    });
+    const data = await res.json();
+    if (data.authorization_url) {
+      window.location.href = data.authorization_url;
+    } else {
+      alert(data.error || 'Could not start payment. Please try again.');
+      setPayingInv(null);
+    }
+  }
+
+  // After returning from Paystack (?paid=<project_id> or ?invoice_paid=<id>), refresh
   useEffect(() => {
     const paid = searchParams.get('paid');
-    if (paid) {
-      setJustPaid(paid);
+    const invoicePaid = searchParams.get('invoice_paid');
+    if (paid || invoicePaid) {
+      if (paid) setJustPaid(paid);
       // webhook may take a moment; poll a couple times
       const t1 = setTimeout(load, 1500);
       const t2 = setTimeout(load, 4000);
       return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [searchParams, load]);
+
+  // Bottom-nav FAB (+) routes here with ?new=1 — open the New Project form.
+  useEffect(() => {
+    if (searchParams.get('new')) setShowForm(true);
+  }, [searchParams]);
 
   async function startPayment(projectId: string) {
     setPaying(projectId);
@@ -61,6 +91,19 @@ function ProjectsInner() {
       alert(data.error || 'Could not start payment. Please try again.');
       setPaying(null);
     }
+  }
+
+  async function deleteProject(projectId: string) {
+    if (!confirm('Delete this project and its brief? This cannot be undone.')) return;
+    setDeleting(projectId);
+    const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+    if (res.ok) {
+      setProjects(ps => ps.filter(p => p.id !== projectId));
+    } else {
+      const d = await res.json();
+      alert(d.error || 'Could not delete project.');
+    }
+    setDeleting(null);
   }
 
   return (
@@ -83,6 +126,8 @@ function ProjectsInner() {
 
       {showForm && <ProjectForm onClose={() => setShowForm(false)} onCreated={() => { setShowForm(false); load(); }} />}
 
+      {!showForm && <ValuePanel />}
+
       {loading ? (
         <div style={{ color: T.textS, fontSize: 14, padding: 20 }}>Loading your projects…</div>
       ) : projects.length === 0 && !showForm ? (
@@ -95,46 +140,149 @@ function ProjectsInner() {
           <Btn onClick={() => setShowForm(true)}><IcPlus sz={14}/>Create your first project</Btn>
         </Card>
       ) : (
-        <div style={{ display: 'grid', gap: 14 }}>
-          {projects.map(p => (
-            <Card key={p.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{p.name}</div>
-                    <StatusBadge s={p.status} />
-                  </div>
-                  {p.business_name && <div style={{ fontSize: 12, color: T.textS }}>{p.business_name}</div>}
-                  <div style={{ fontSize: 11, color: T.textM, marginTop: 6 }}>
-                    {p.status === 'submitted' && 'Brief submitted · awaiting payment to activate'}
-                    {p.status === 'active' && 'Active subscription · our team is building / maintaining your site'}
-                    {p.status === 'cancelled' && 'Subscription cancelled'}
-                  </div>
+        <div className="projects-grid">
+          <style>{`
+            .projects-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+            @media (min-width: 900px)  { .projects-grid { grid-template-columns: repeat(2, 1fr); } }
+            @media (min-width: 1400px) { .projects-grid { grid-template-columns: repeat(3, 1fr); } }
+
+            .glass-card {
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              border-radius: 18px;
+              padding: 20px;
+              background: var(--ws-card);
+              border: 1px solid var(--ws-border);
+              overflow: hidden;
+              transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+              box-shadow: 0 1px 3px rgba(12,26,46,0.05);
+            }
+            .glass-card::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              background: var(--glass-tint);
+              -webkit-backdrop-filter: blur(8px);
+              backdrop-filter: blur(8px);
+              pointer-events: none;
+            }
+            .glass-card > * { position: relative; z-index: 1; }
+            .glass-card:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 12px 28px rgba(12,26,46,0.12);
+              border-color: var(--ws-borderHi);
+            }
+            .icon-btn {
+              width: 34px; height: 34px;
+              display: inline-flex; align-items: center; justify-content: center;
+              border-radius: 10px;
+              background: rgba(255,255,255,0.45);
+              -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+              border: 1px solid var(--ws-border);
+              cursor: pointer; transition: all 0.15s ease;
+            }
+            [data-theme="dark"] .icon-btn { background: rgba(255,255,255,0.06); }
+            .icon-btn:hover { transform: translateY(-1px); }
+            .icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+            .icon-btn.edit:hover   { border-color: ${T.accent}; background: ${T.accent}14; }
+            .icon-btn.delete:hover { border-color: ${T.danger}; background: ${T.danger}14; }
+          `}</style>
+          {projects.map(p => {
+            const canModify = p.status === 'submitted' || p.status === 'processing' || p.status === 'cancelled';
+            const tint =
+              p.status === 'active'     ? `linear-gradient(135deg, ${T.success}0E, ${T.success}03)` :
+              p.status === 'processing' ? `linear-gradient(135deg, ${T.info}12, ${T.info}03)` :
+              p.status === 'cancelled'  ? `linear-gradient(135deg, ${T.danger}0E, ${T.danger}03)` :
+                                          `linear-gradient(135deg, ${T.accent}0E, ${T.purple}06)`;
+            return (
+              <div key={p.id} className="glass-card" style={{ '--glass-tint': tint } as React.CSSProperties}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: T.text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.3px' }}>{p.name}</div>
+                  <StatusBadge s={p.status} />
                 </div>
-                {p.status === 'submitted' && (
-                  <Btn onClick={() => startPayment(p.id)} disabled={paying === p.id}>
-                    <IcCard sz={14}/>{paying === p.id ? 'Starting…' : 'Pay to activate'}
-                  </Btn>
-                )}
-                {p.status === 'cancelled' && (
-                  <Btn variant="outline" onClick={() => startPayment(p.id)} disabled={paying === p.id}>
-                    <IcCard sz={14}/>{paying === p.id ? 'Starting…' : 'Re-subscribe'}
-                  </Btn>
-                )}
+                {p.business_name && <div style={{ fontSize: 12, color: T.textS }}>{p.business_name}</div>}
+                <div style={{ fontSize: 11.5, color: T.textM, marginTop: 8, marginBottom: 16, flex: 1, lineHeight: 1.5 }}>
+                  {p.status === 'submitted'  && 'Brief submitted · awaiting payment to activate'}
+                  {p.status === 'processing' && 'Payment in progress · confirming with Paystack'}
+                  {p.status === 'active'     && 'Active subscription · our team is building / maintaining your site'}
+                  {p.status === 'cancelled'  && 'Subscription cancelled'}
+                </div>
+
+                {/* Add-on invoices raised by the team for this project */}
+                {invoices.filter(inv => inv.project_id === p.id && inv.status === 'unpaid').map(inv => (
+                  <div key={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', marginBottom: 10, borderRadius: 12, background: T.warn + '10', border: `1px solid ${T.warn}30` }}>
+                    <IcAlert sz={16} col={T.warn} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: T.text }}>{inv.description || 'Add-on'} · ₦{(inv.amount / 100).toLocaleString()}</div>
+                      <div style={{ fontSize: 10.5, color: T.textM }}>Invoice {inv.id}{inv.due_date ? ` · due ${inv.due_date}` : ''}</div>
+                    </div>
+                    <Btn sz="sm" onClick={() => payInvoice(inv.id)} disabled={payingInv === inv.id}>
+                      <IcCard sz={12}/>{payingInv === inv.id ? '…' : 'Pay'}
+                    </Btn>
+                  </div>
+                ))}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {p.status === 'submitted' && (
+                    <Btn sz="sm" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                      <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Pay to activate'}
+                    </Btn>
+                  )}
+                  {p.status === 'processing' && (
+                    <Btn sz="sm" variant="subtle" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                      <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Complete payment'}
+                    </Btn>
+                  )}
+                  {p.status === 'cancelled' && (
+                    <Btn sz="sm" variant="outline" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                      <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Re-subscribe'}
+                    </Btn>
+                  )}
+
+                  {/* CRUD — icon-only, only while payment is not completed */}
+                  {canModify && (
+                    <>
+                      <button className="icon-btn edit" onClick={() => setEditing(p)} title="Edit brief" aria-label="Edit brief">
+                        <IcEdit sz={15} col={T.textS} />
+                      </button>
+                      <button className="icon-btn delete" onClick={() => deleteProject(p.id)} disabled={deleting === p.id} title="Delete project" aria-label="Delete project">
+                        <IcTrash sz={15} col={deleting === p.id ? T.textM : T.danger} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-            </Card>
-          ))}
+            );
+          })}
         </div>
+      )}
+
+      {editing && (
+        <ProjectForm
+          existing={editing}
+          onClose={() => setEditing(null)}
+          onCreated={() => { setEditing(null); load(); }}
+        />
       )}
     </div>
   );
 }
 
-// ── Brief form ────────────────────────────────────────────────────────────────
-function ProjectForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+// ── Brief form (create + edit) ────────────────────────────────────────────────
+function ProjectForm({ existing, onClose, onCreated }: { existing?: Project; onClose: () => void; onCreated: () => void }) {
+  const isEdit = !!existing;
   const [f, setF] = useState({
-    name: '', business_name: '', about: '', extra_info: '', socials: '',
-    address: '', phone: '', business_email: '', brand_colors: '', whatsapp: '',
+    name:           existing?.name           ?? '',
+    business_name:  existing?.business_name  ?? '',
+    about:          existing?.about          ?? '',
+    extra_info:     existing?.extra_info     ?? '',
+    socials:        existing?.socials        ?? '',
+    address:        existing?.address        ?? '',
+    phone:          existing?.phone          ?? '',
+    business_email: existing?.business_email ?? '',
+    brand_colors:   existing?.brand_colors   ?? '',
+    whatsapp:       existing?.whatsapp        ?? '',
   });
   const [logo, setLogo]       = useState<File | null>(null);
   const [images, setImages]   = useState<File[]>([]);
@@ -149,6 +297,21 @@ function ProjectForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
     setError('');
 
     try {
+      if (isEdit) {
+        // Edit only updates the text brief (file changes not handled here)
+        const res = await fetch(`/api/projects/${existing!.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(f),
+        });
+        if (!res.ok) {
+          const d = await res.json();
+          throw new Error(d.error || 'Could not update your project.');
+        }
+        onCreated();
+        return;
+      }
+
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('You are not signed in.'); setSaving(false); return; }
@@ -206,9 +369,11 @@ function ProjectForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
             <IcGlobe sz={20} col={T.accent} />
           </div>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>New project brief</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>{isEdit ? 'Edit project brief' : 'New project brief'}</div>
             <div style={{ fontSize: 12.5, color: T.textS, marginTop: 2 }}>
-              Only the project name is required — fill in what you can, send the rest over WhatsApp anytime.
+              {isEdit
+                ? 'Update your brief details. To change uploaded images, contact us on WhatsApp.'
+                : 'Only the project name is required — fill in what you can, send the rest over WhatsApp anytime.'}
             </div>
           </div>
         </div>
@@ -246,15 +411,15 @@ function ProjectForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
         <FormSection n="03" title="Brand & media" hint="Colors and images help us match your look — optional." />
         <div className="pf-grid">
           <div className="pf-col-2"><Input label="Brand colors (optional)" value={f.brand_colors} onChange={upd('brand_colors')} placeholder="e.g. navy blue & gold — or leave blank and we'll make it professional" /></div>
-          <div><FileField label="Business logo (if you have one)" multiple={false} onChange={files => setLogo(files[0] ?? null)} /></div>
-          <div><FileField label="3–5 images of you or your business" multiple onChange={setImages} /></div>
+          {!isEdit && <div><FileField label="Business logo (if you have one)" multiple={false} onChange={files => setLogo(files[0] ?? null)} /></div>}
+          {!isEdit && <div><FileField label="3–5 images of you or your business" multiple onChange={setImages} /></div>}
         </div>
       </div>
 
       {/* Footer actions */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.elevated }}>
         <Btn variant="outline" onClick={onClose} disabled={saving}>Cancel</Btn>
-        <Btn onClick={submit} disabled={saving}>{saving ? 'Submitting…' : 'Submit brief'}</Btn>
+        <Btn onClick={submit} disabled={saving}>{saving ? (isEdit ? 'Saving…' : 'Submitting…') : (isEdit ? 'Save changes' : 'Submit brief')}</Btn>
       </div>
     </Card>
   );
@@ -325,5 +490,49 @@ function FileField({ label, multiple, onChange }: { label: string; multiple: boo
         </div>
       )}
     </div>
+  );
+}
+
+// ── What's included / plan value (folded in from the old Subscription page) ────
+function ValuePanel() {
+  const [open, setOpen] = useState(false);
+
+  const features = [
+    { icon: <IcGlobe sz={15} col={T.accent}/>,  t: 'Domain Registration & Renewal', d: 'We manage your domain — no surprises, no lapses.' },
+    { icon: <IcBar sz={15}   col={T.info}/>,    t: 'Website Hosting',               d: 'Fast, reliable hosting with 99.9% uptime SLA.' },
+    { icon: <IcCog sz={15}   col={T.success}/>, t: 'Monthly Maintenance',           d: 'Content updates, security patches, performance monitoring.' },
+    { icon: <IcMail sz={15}  col={T.warn}/>,    t: 'Priority Support',              d: 'Direct email and phone access to the Websync team.' },
+  ];
+
+  return (
+    <Card style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+      {/* Plan header — gradient strip */}
+      <div style={{ background: 'linear-gradient(135deg,#1E3A8A 0%,#2563EB 60%,#3B82F6 100%)', padding: '16px 20px', color: '#fff', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>Your plan — per project</div>
+          <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.5px', marginTop: 2 }}>₦9,999<span style={{ fontSize: 13, fontWeight: 500, opacity: 0.7 }}>/month</span></div>
+          <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>Domain management + website maintenance, billed monthly on each active project.</div>
+        </div>
+        <button onClick={() => setOpen(o => !o)}
+          style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', whiteSpace: 'nowrap' }}>
+          {open ? 'Hide details' : "What's included"}
+        </button>
+      </div>
+
+      {/* Expandable feature list */}
+      {open && (
+        <div style={{ padding: '6px 20px 14px' }}>
+          {features.map((item, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < features.length - 1 ? `1px solid ${T.border}` : 'none' }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: T.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 2 }}>{item.t}</div>
+                <div style={{ fontSize: 12, color: T.textS }}>{item.d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }

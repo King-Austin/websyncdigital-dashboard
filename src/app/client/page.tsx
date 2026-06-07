@@ -2,21 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { T, fmt } from '@/lib/theme';
+import { T } from '@/lib/theme';
 import { StatCard, Card, Grid2, SectionTitle, Row, Btn } from '@/components/ui';
-import { IcGlobe, IcBar, IcFile, IcAlert, IcLink, IcCal, IcCog, IcCard } from '@/components/ui/Icons';
+import { IcGlobe, IcBar, IcFile, IcLink, IcCal, IcCog } from '@/components/ui/Icons';
 import { StatusBadge, Dot } from '@/components/ui';
 import { createClient } from '@/lib/supabase/client';
 
 interface WebsiteRow { id: number; name: string; url: string; status: 'live'|'maintenance'|'down'; domain_expiry: string; seo_score: number; monthly_visits: number; }
-interface InvoiceRow { id: string; amount: number; due_date: string; status: 'paid'|'unpaid'|'overdue'; }
 interface NotifRow   { id: number; type: string; message: string; read: boolean; created_at: string; }
 interface ProfileRow { name: string; }
 
 export default function ClientOverview() {
   const [profile, setProfile]   = useState<ProfileRow | null>(null);
   const [sites, setSites]       = useState<WebsiteRow[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [notifs, setNotifs]     = useState<NotifRow[]>([]);
   const [loading, setLoading]   = useState(true);
 
@@ -26,23 +24,20 @@ export default function ClientOverview() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [{ data: prof }, { data: ws }, { data: inv }, { data: n }] = await Promise.all([
+      const [{ data: prof }, { data: ws }, { data: n }] = await Promise.all([
         supabase.from('ws_profiles').select('name').eq('id', user.id).single(),
         supabase.from('ws_websites').select('*').eq('client_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('ws_invoices').select('*').eq('client_id', user.id).order('created_at', { ascending: false }),
         supabase.from('ws_notifications').select('*').eq('client_id', user.id).order('created_at', { ascending: false }).limit(5),
       ]);
 
       setProfile(prof);
       setSites(ws || []);
-      setInvoices(inv || []);
       setNotifs(n || []);
       setLoading(false);
     })();
   }, []);
 
   const totalVisits = sites.reduce((sum, s) => sum + s.monthly_visits, 0);
-  const unpaid = invoices.find(i => i.status === 'unpaid');
 
   if (loading) return <div style={{ color: T.textS, fontSize: 13, padding: 24 }}>Loading dashboard…</div>;
 
@@ -55,21 +50,11 @@ export default function ClientOverview() {
         <p style={{ color: T.textS, fontSize: 13, marginTop: 4 }}>Here is a snapshot of your web presence</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 22 }}>
+      <div className="grid3-resp" style={{ marginBottom: 22 }}>
         <StatCard label="Active Websites"  value={sites.length}                sub="Managed by Websync"    icon={<IcGlobe/>}  col={T.accent}/>
         <StatCard label="Monthly Visits"   value={totalVisits.toLocaleString()} sub="Across all your sites" icon={<IcBar/>}    col={T.info}   trend={6}/>
-        <StatCard label="Monthly Retainer" value="₦9,999"                       sub="Due 10th each month"   icon={<IcFile/>}   col={T.warn}/>
+        <StatCard label="Monthly Total" value={`₦${(9999 * sites.length).toLocaleString()}`} sub={`₦9,999 × ${sites.length} site${sites.length === 1 ? '' : 's'}`} icon={<IcFile/>} col={T.warn}/>
       </div>
-
-      {unpaid && (
-        <div style={{ background: T.warn + '0F', border: `1px solid ${T.warn}30`, borderRadius: 10, padding: '12px 16px', marginBottom: 22, display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between' }}>
-          <Row>
-            <IcAlert sz={15} col={T.warn}/>
-            <span style={{ fontSize: 13, color: T.text }}>Invoice <strong>{unpaid.id}</strong> of <strong>{fmt(unpaid.amount)}</strong> is due <strong>{unpaid.due_date}</strong></span>
-          </Row>
-          <Link href="/client/billing"><Btn sz="sm">View Invoice</Btn></Link>
-        </div>
-      )}
 
       <Grid2>
         <div>
@@ -143,11 +128,11 @@ export default function ClientOverview() {
           ))}
 
           <div style={{ marginTop: 8, padding: 20, background: 'linear-gradient(135deg,#EBF2FF 0%,#DBEAFE 100%)', borderRadius: 14, border: `1px solid ${T.accent}20` }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 4 }}>Monthly Subscription</div>
-            <div style={{ fontSize: 13, color: T.textS, marginBottom: 14, lineHeight: 1.55 }}>₦9,999/month · Domain + Website Management. Pay securely via Paystack.</div>
-            <a href={process.env.NEXT_PUBLIC_PAYSTACK_SHOP_LINK || 'https://paystack.shop/pay/qgnem3g4a8'} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: T.accent, color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', boxShadow: `0 2px 8px ${T.accent}40` }}>
-              <IcCard sz={14} col="#fff"/> Subscribe via Paystack
-            </a>
+            <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 4 }}>Need another website?</div>
+            <div style={{ fontSize: 13, color: T.textS, marginBottom: 14, lineHeight: 1.55 }}>₦9,999/month per site · Domain + Website Management. Start a new project to add one.</div>
+            <Link href="/client/projects" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: T.accent, color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 13, textDecoration: 'none', boxShadow: `0 2px 8px ${T.accent}40` }}>
+              <IcGlobe sz={14} col="#fff"/> New Project
+            </Link>
           </div>
         </div>
       </Grid2>

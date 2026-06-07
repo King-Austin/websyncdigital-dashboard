@@ -1,10 +1,40 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { T } from '@/lib/theme';
 import { Avatar } from '@/components/ui';
 import { IcShield } from '@/components/ui/Icons';
 import { useTheme } from '@/lib/ThemeProvider';
+import { createClient } from '@/lib/supabase/client';
+
+const LogoutButton = () => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  const logout = async () => {
+    setLoading(true);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
+  return (
+    <button onClick={logout} disabled={loading} aria-label="Log out" style={{
+      width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
+      borderRadius: 9, background: 'transparent', border: `1px solid ${T.border}`,
+      cursor: loading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 500,
+      color: T.danger, fontFamily: 'Plus Jakarta Sans', marginTop: 8, transition: 'all 0.12s',
+      opacity: loading ? 0.6 : 1,
+    }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.danger} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      <span style={{ flex: 1, textAlign: 'left' }}>{loading ? 'Signing out…' : 'Log out'}</span>
+    </button>
+  );
+};
 
 const ThemeToggle = () => {
   const { theme, toggle } = useTheme();
@@ -103,6 +133,7 @@ export const Sidebar = ({ items, active, onSelect, role, userName, userEmail, op
           <div style={{ fontSize: 10, color: T.textM, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userEmail || (role === 'admin' ? 'admin@websync.ng' : '')}</div>
         </div>
       </div>
+      <LogoutButton />
     </div>
   </aside>
 );

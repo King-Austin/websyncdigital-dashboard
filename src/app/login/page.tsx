@@ -51,8 +51,8 @@ export default function LoginPage() {
         }
       `}</style>
       {/* Brand panel */}
-      <div className="login-brand" style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 55%, #3B82F6 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(59,130,246,0.3) 0%, transparent 60%)' }} />
+      <div className="login-brand" style={{ background: 'linear-gradient(155deg, #13160F 0%, #1F4A35 55%, #2A6347 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 48, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 20% 20%, rgba(255,255,255,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(31,74,53,0.3) 0%, transparent 60%)' }} />
         {[{w:600,h:600,t:-200,l:-200},{w:400,h:400,b:-150,r:-150},{w:200,h:200,t:'40%',r:'10%'}].map((c,i) => (
           <div key={i} style={{ position:'absolute', width:c.w, height:c.h, top:c.t as any, left:c.l as any, bottom:c.b as any, right:c.r as any, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.1)' }}/>
         ))}
@@ -95,33 +95,33 @@ export default function LoginPage() {
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               </div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#0C1A2E', marginBottom: 8 }}>You&apos;re in!</div>
-              <div style={{ fontSize: 14, color: '#5B728E', marginBottom: 24 }}>Redirecting to your dashboard…</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#141310', marginBottom: 8 }}>You&apos;re in!</div>
+              <div style={{ fontSize: 14, color: '#2E2C26', marginBottom: 24 }}>Redirecting to your dashboard…</div>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div style={{ width: 20, height: 20, border: '2px solid #DDE5F0', borderTopColor: '#2563EB', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                <div style={{ width: 20, height: 20, border: '2px solid rgba(0,0,0,0.16)', borderTopColor: '#1F4A35', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
               </div>
             </div>
           ) : (
             <form onSubmit={handleLogin}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#0C1A2E', letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome back</div>
-              <div style={{ fontSize: 14, color: '#5B728E', marginBottom: 32, lineHeight: 1.5 }}>Sign in to your Websync client portal to manage your websites and more.</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#141310', letterSpacing: '-0.5px', marginBottom: 6 }}>Welcome back</div>
+              <div style={{ fontSize: 14, color: '#2E2C26', marginBottom: 32, lineHeight: 1.5 }}>Sign in to your Websync client portal to manage your websites and more.</div>
 
               {error && (
                 <div style={{ marginBottom: 16, padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, fontSize: 13, color: '#DC2626' }}>{error}</div>
               )}
 
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#5B728E', marginBottom: 6 }}>Email address</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#2E2C26', marginBottom: 6 }}>Email address</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com.ng" autoComplete="email"
-                  style={{ width: '100%', padding: '11px 14px', background: '#F4F7FB', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontFamily: 'Plus Jakarta Sans', color: '#0C1A2E', outline: 'none', transition: 'all 0.15s' }} />
+                  style={{ width: '100%', padding: '11px 14px', background: '#E4E2DC', border: '1.5px solid rgba(0,0,0,0.16)', borderRadius: 10, fontSize: 14, fontFamily: "'DM Mono', monospace", color: '#141310', outline: 'none', transition: 'all 0.15s' }} />
               </div>
 
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#5B728E', marginBottom: 6 }}>Password</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#2E2C26', marginBottom: 6 }}>Password</label>
                 <div style={{ position: 'relative' }}>
                   <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" autoComplete="current-password"
-                    style={{ width: '100%', padding: '11px 44px 11px 14px', background: '#F4F7FB', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontFamily: 'Plus Jakarta Sans', color: '#0C1A2E', outline: 'none', transition: 'all 0.15s' }} />
-                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#8FA9C4', padding: 4 }}>
+                    style={{ width: '100%', padding: '11px 44px 11px 14px', background: '#E4E2DC', border: '1.5px solid rgba(0,0,0,0.16)', borderRadius: 10, fontSize: 14, fontFamily: "'DM Mono', monospace", color: '#141310', outline: 'none', transition: 'all 0.15s' }} />
+                  <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#555049', padding: 4 }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       {showPw
                         ? <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></>
@@ -133,21 +133,21 @@ export default function LoginPage() {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#5B728E', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#2563EB' }} /> Remember me
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#2E2C26', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#1F4A35' }} /> Remember me
                 </label>
-                <a href="#" style={{ fontSize: 13, color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
+                <a href="#" style={{ fontSize: 13, color: '#1F4A35', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
               </div>
 
-              <button type="submit" disabled={loading || !email || !password} style={{ width: '100%', padding: 13, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: 'Plus Jakarta Sans', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(37,99,235,0.3)', transition: 'all 0.15s', marginBottom: 16, opacity: loading ? 0.7 : 1 }}>
+              <button type="submit" disabled={loading || !email || !password} style={{ width: '100%', padding: 13, background: '#1F4A35', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: "'DM Mono', monospace", cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(31,74,53,0.28)', transition: 'all 0.15s', marginBottom: 16, opacity: loading ? 0.7 : 1 }}>
                 {loading ? <><div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Signing in…</> : 'Sign in'}
               </button>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 16px', color: '#8FA9C4', fontSize: 12 }}>
-                <div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />or<div style={{ flex: 1, height: 1, background: '#DDE5F0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '6px 0 16px', color: '#555049', fontSize: 12 }}>
+                <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.16)' }} />or<div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.16)' }} />
               </div>
 
-              <button type="button" onClick={handleGoogle} style={{ width: '100%', padding: 12, background: '#fff', color: '#0C1A2E', border: '1.5px solid #DDE5F0', borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: 'Plus Jakarta Sans', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}>
+              <button type="button" onClick={handleGoogle} style={{ width: '100%', padding: 12, background: '#fff', color: '#141310', border: '1.5px solid rgba(0,0,0,0.16)', borderRadius: 10, fontSize: 14, fontWeight: 600, fontFamily: "'DM Mono', monospace", cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.15s' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
@@ -157,8 +157,11 @@ export default function LoginPage() {
                 Continue with Google
               </button>
 
-              <div style={{ textAlign: 'center', fontSize: 13, color: '#5B728E', marginTop: 20 }}>
-                New to Websync? <Link href="/register" style={{ color: '#2563EB', fontWeight: 700, textDecoration: 'none' }}>Create an account →</Link>
+              <div style={{ textAlign: 'center', fontSize: 13, color: '#2E2C26', marginTop: 20 }}>
+                New to Websync? <Link href="/register" style={{ color: '#1F4A35', fontWeight: 700, textDecoration: 'none' }}>Create an account →</Link>
+              </div>
+              <div style={{ textAlign: 'center', fontSize: 12, color: '#555049', marginTop: 8 }}>
+                <Link href="/admin-register" style={{ color: '#555049', fontWeight: 600, textDecoration: 'none' }}>Admin sign-up</Link>
               </div>
             </form>
           )}

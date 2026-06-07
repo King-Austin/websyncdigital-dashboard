@@ -37,8 +37,34 @@ export async function POST(request: Request) {
       const plan    = event.data.plan?.name ?? event.data.subscription?.plan?.name ?? 'Monthly';
       const paidAt  = event.data.paid_at ?? new Date().toISOString();
       const projectId = event.data.metadata?.project_id ?? null;
+      const invoiceId = event.data.metadata?.invoice_id ?? null;
       const subCode   = event.data.subscription_code ?? event.data.subscription?.subscription_code ?? null;
       const custCode  = event.data.customer?.customer_code ?? null;
+
+      // ── Add-on invoice payment (one-time charge) ──────────────────────────────
+      // Separate lane: mark the invoice paid; never touch project subscription state.
+      if (invoiceId && email && ref) {
+        await supabase.from('ws_payments').upsert({
+          reference: ref, email, amount: amt, status: 'success',
+          plan: 'add-on invoice', paid_at: paidAt, event_type: event.event,
+        }, { onConflict: 'reference' });
+
+        const { data: inv } = await supabase
+          .from('ws_invoices')
+          .update({ status: 'paid', paystack_reference: ref })
+          .eq('id', invoiceId)
+          .select('client_id, description')
+          .single();
+
+        if (inv?.client_id) {
+          await supabase.from('ws_notifications').insert({
+            client_id: inv.client_id,
+            type: 'billing',
+            message: `Invoice ${invoiceId} paid — ₦${(amt / 100).toLocaleString()} received. Thank you!`,
+          });
+        }
+        break;
+      }
 
       if (email && ref) {
         // Record the payment (tagged with the project it paid for)

@@ -1,44 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { T } from '@/lib/theme';
-import { CLIENTS_DATA, EMAIL_TEMPLATES } from '@/lib/data';
+import { EMAIL_TEMPLATES, type EmailTemplate } from '@/lib/emailTemplates';
 import { Card, Grid2, Row, Btn, Sel, Input, Textarea, SectionTitle } from '@/components/ui';
 import { Badge } from '@/components/ui';
 import { IcZap, IcSend, IcEdit, IcCheck } from '@/components/ui/Icons';
 
 type Tab = 'compose' | 'templates' | 'history';
 
-const HISTORY = [
-  { id: 1, to: 'All Clients',   subj: 'June Newsletter — Website Performance Tips', date: 'May 28, 2026', opens: 3 },
-  { id: 2, to: 'Amaka Okonkwo', subj: 'Reminder: Invoice INV-005 Payment Due',      date: 'Jun 01, 2026', opens: 1 },
-  { id: 3, to: 'Adaobi Bright', subj: 'Welcome to Websync Digital!',                date: 'Nov 12, 2024', opens: 2 },
-];
+interface ClientRow { id: string; name: string; company: string | null; email: string | null; }
+
+interface EmailLogRow {
+  id: string;
+  subject: string;
+  recipient: string;
+  recipients: number;
+  sent: number;
+  failed: number;
+  status: 'sent' | 'partial' | 'failed';
+  kind: string;
+  created_at: string;
+}
+
+const STATUS_COL: Record<string, string> = { sent: T.success, partial: T.warn, failed: T.danger };
 
 export default function AdminEmail() {
   const [to, setTo]     = useState('all');
   const [subj, setSubj] = useState('');
   const [body, setBody] = useState('');
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState<{ sent: number; recipients: number } | null>(null);
+  const [error, setError] = useState('');
   const [tab, setTab]   = useState<Tab>('compose');
   const [loading, setLoading] = useState(false);
 
-  const applyTemplate = (tmpl: typeof EMAIL_TEMPLATES[0]) => { setSubj(tmpl.subj); setBody(tmpl.body); setSent(false); setTab('compose'); };
-  const recipientName = to === 'all' ? 'all clients' : (CLIENTS_DATA.find(c => String(c.id) === String(to))?.name || '');
+  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [history, setHistory] = useState<EmailLogRow[]>([]);
+
+  const loadHistory = useCallback(() => {
+    fetch('/api/email/history').then(r => r.ok ? r.json() : []).then(d => setHistory(Array.isArray(d) ? d : [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/clients').then(r => r.ok ? r.json() : []).then(d => setClients(Array.isArray(d) ? d : [])).catch(() => {});
+    loadHistory();
+  }, [loadHistory]);
+
+  const applyTemplate = (tmpl: EmailTemplate) => { setSubj(tmpl.subject); setBody(tmpl.body); setSent(null); setError(''); setTab('compose'); };
+  const recipientName = to === 'all' ? 'all clients' : (clients.find(c => c.id === to)?.name || '');
 
   async function handleSend() {
     if (!subj || !body) return;
     setLoading(true);
+    setError('');
+    setSent(null);
     try {
-      await fetch('/api/send-email', {
+      const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to, subject: subj, body, recipientName }),
       });
-      setSent(true);
-    } catch {}
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not send the email.');
+      } else {
+        setSent({ sent: data.sent, recipients: data.recipients });
+        loadHistory();
+      }
+    } catch {
+      setError('Something went wrong while sending.');
+    }
     setLoading(false);
   }
+
+  const fmtDate = (s: string) => new Date(s).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="fade-in">
@@ -51,8 +86,8 @@ export default function AdminEmail() {
           <div style={{ fontSize: 12, color: T.textS }}>All transactional and manual emails are sent via Resend — welcome, invoices, ticket updates, and campaigns.</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: T.success, fontWeight: 600 }}>● Connected</div>
-          <div style={{ fontSize: 11, color: T.textM }}>94% delivery rate</div>
+          <div style={{ fontSize: 11, color: T.textM }}>{clients.length} client{clients.length === 1 ? '' : 's'}</div>
+          <div style={{ fontSize: 11, color: T.textM }}>{history.length} send{history.length === 1 ? '' : 's'} logged</div>
         </div>
       </div>
 
@@ -81,31 +116,38 @@ export default function AdminEmail() {
                 ))}
               </div>
             </div>
-            <Sel label="Send To" value={to} onChange={v => { setTo(v); setSent(false); }} opts={[{v:'all',l:'All Clients'}, ...CLIENTS_DATA.map(c => ({v:String(c.id),l:`${c.name} — ${c.company}`}))]}/>
-            <Input label="Subject" value={subj} onChange={v => { setSubj(v); setSent(false); }} placeholder="Email subject line" required/>
-            <Textarea label="Message" value={body} onChange={v => { setBody(v); setSent(false); }} placeholder="Write your message… Use {name} for personalisation." rows={7}/>
+            <Sel label="Send To" value={to} onChange={v => { setTo(v); setSent(null); setError(''); }}
+              opts={[{ v: 'all', l: `All Clients (${clients.length})` }, ...clients.map(c => ({ v: c.id, l: `${c.name}${c.company ? ' — ' + c.company : ''}` }))]} />
+            <Input label="Subject" value={subj} onChange={v => { setSubj(v); setSent(null); }} placeholder="Email subject line" required/>
+            <Textarea label="Message" value={body} onChange={v => { setBody(v); setSent(null); }} placeholder="Write your message… Use {name} for personalisation." rows={7}/>
             <Row style={{ justifyContent: 'flex-end' }}>
-              <Btn variant="outline" onClick={() => { setSubj(''); setBody(''); setSent(false); }}>Clear</Btn>
+              <Btn variant="outline" onClick={() => { setSubj(''); setBody(''); setSent(null); setError(''); }}>Clear</Btn>
               <Btn disabled={!subj || !body || loading} onClick={handleSend}><IcSend sz={13}/>{loading ? 'Sending…' : 'Send via Resend'}</Btn>
             </Row>
             {sent && (
               <div style={{ marginTop: 12, padding: '10px 14px', background: T.success + '12', border: `1px solid ${T.success}30`, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <IcCheck sz={14} col={T.success}/>
-                <span style={{ fontSize: 13, color: T.success }}>Email sent to <strong>{recipientName}</strong> via Resend</span>
+                <span style={{ fontSize: 13, color: T.success }}>Sent to <strong>{sent.sent}</strong> of {sent.recipients} recipient{sent.recipients === 1 ? '' : 's'} via Resend</span>
               </div>
+            )}
+            {error && (
+              <div style={{ marginTop: 12, padding: '10px 14px', background: T.danger + '10', border: `1px solid ${T.danger}30`, borderRadius: 8, fontSize: 13, color: T.danger }}>{error}</div>
             )}
           </Card>
           <Card>
-            <SectionTitle>Send History</SectionTitle>
-            {HISTORY.map((h, i) => (
-              <div key={h.id} style={{ padding: '12px 0', borderBottom: i < HISTORY.length - 1 ? `1px solid ${T.border}` : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: T.text, flex: 1, paddingRight: 8 }}>{h.subj}</div>
-                  <Badge col={T.success}>Delivered</Badge>
+            <SectionTitle>Recent Sends</SectionTitle>
+            {history.length === 0
+              ? <div style={{ fontSize: 13, color: T.textS, padding: '12px 0' }}>No emails sent yet.</div>
+              : history.slice(0, 6).map((h, i) => (
+                <div key={h.id} style={{ padding: '12px 0', borderBottom: i < Math.min(history.length, 6) - 1 ? `1px solid ${T.border}` : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4, gap: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.text, flex: 1 }}>{h.subject}</div>
+                    <Badge col={STATUS_COL[h.status] || T.textS}>{h.status === 'sent' ? 'Delivered' : h.status === 'partial' ? 'Partial' : 'Failed'}</Badge>
+                  </div>
+                  <div style={{ fontSize: 12, color: T.textS }}>To: {h.recipient} · {fmtDate(h.created_at)} · {h.sent}/{h.recipients} sent</div>
                 </div>
-                <div style={{ fontSize: 12, color: T.textS }}>To: {h.to} · {h.date} · {h.opens} opens</div>
-              </div>
-            ))}
+              ))
+            }
           </Card>
         </Grid2>
       )}
@@ -121,8 +163,8 @@ export default function AdminEmail() {
                   <Badge col={t.auto ? T.success : T.textS}>{t.auto ? 'Auto' : 'Manual'}</Badge>
                 </div>
                 <div style={{ fontSize: 12, color: T.textS, marginBottom: 8 }}>Trigger: <strong style={{ color: T.text }}>{t.trigger}</strong></div>
-                <div style={{ fontSize: 12, color: T.textS, marginBottom: 12 }}>Subject: <em>{t.subj}</em></div>
-                <Btn sz="sm" variant="outline" onClick={() => applyTemplate(t)}><IcEdit sz={12}/>Edit Template</Btn>
+                <div style={{ fontSize: 12, color: T.textS, marginBottom: 12 }}>Subject: <em>{t.subject}</em></div>
+                <Btn sz="sm" variant="outline" onClick={() => applyTemplate(t)}><IcEdit sz={12}/>Use Template</Btn>
               </Card>
             ))}
           </div>
@@ -131,26 +173,31 @@ export default function AdminEmail() {
 
       {tab === 'history' && (
         <Card style={{ padding: 0 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                {['Subject', 'Recipient', 'Date', 'Opens', 'Status'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '11px 16px', fontSize: 11, color: T.textM, fontWeight: 600, borderBottom: `1px solid ${T.border}`, textTransform: 'uppercase', letterSpacing: '0.5px', background: T.elevated }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {HISTORY.map((h, i) => (
-                <tr key={h.id} style={{ borderBottom: i < HISTORY.length - 1 ? `1px solid ${T.border}` : 'none' }}>
-                  <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: T.text }}>{h.subj}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 13, color: T.textS }}>{h.to}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 13, color: T.textS }}>{h.date}</td>
-                  <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 700, color: T.accent }}>{h.opens}</td>
-                  <td style={{ padding: '13px 16px' }}><Badge col={T.success}>Delivered</Badge></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {history.length === 0
+            ? <div style={{ padding: 28, textAlign: 'center', color: T.textS, fontSize: 13 }}>No emails have been sent yet.</div>
+            : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    {['Subject', 'Recipient', 'Date', 'Sent', 'Status'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '11px 16px', fontSize: 11, color: T.textM, fontWeight: 600, borderBottom: `1px solid ${T.border}`, textTransform: 'uppercase', letterSpacing: '0.5px', background: T.elevated }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((h, i) => (
+                    <tr key={h.id} style={{ borderBottom: i < history.length - 1 ? `1px solid ${T.border}` : 'none' }}>
+                      <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, color: T.text }}>{h.subject}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: T.textS }}>{h.recipient}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: T.textS }}>{fmtDate(h.created_at)}</td>
+                      <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 700, color: T.accent }}>{h.sent}/{h.recipients}</td>
+                      <td style={{ padding: '13px 16px' }}><Badge col={STATUS_COL[h.status] || T.textS}>{h.status === 'sent' ? 'Delivered' : h.status === 'partial' ? 'Partial' : 'Failed'}</Badge></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          }
         </Card>
       )}
     </div>

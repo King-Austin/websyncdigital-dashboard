@@ -4,8 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isProtected = pathname.startsWith('/client') || pathname.startsWith('/admin');
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin-register';
+  // /admin-register is a public signup page (outside the /admin dashboard tree)
+  const isProtected = pathname.startsWith('/client')
+    || (pathname.startsWith('/admin') && !pathname.startsWith('/admin-register'));
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

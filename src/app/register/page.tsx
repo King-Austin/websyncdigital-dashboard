@@ -16,9 +16,9 @@ function PasswordStrength({ pw }: { pw: string }) {
   return (
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'flex', gap: 3, marginBottom: 5 }}>
-        {[1,2,3,4,5].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= score ? colors[score-1] : '#DDE5F0', transition: 'background 0.3s' }}/>)}
+        {[1,2,3,4,5].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= score ? colors[score-1] : 'rgba(0,0,0,0.16)', transition: 'background 0.3s' }}/>)}
       </div>
-      <div style={{ fontSize: 11, color: score > 0 ? colors[score-1] : '#8FA9C4', fontWeight: 600 }}>{score > 0 ? labels[score-1] : ''}</div>
+      <div style={{ fontSize: 11, color: score > 0 ? colors[score-1] : '#555049', fontWeight: 600 }}>{score > 0 ? labels[score-1] : ''}</div>
     </div>
   );
 }
@@ -69,16 +69,16 @@ export default function RegisterPage() {
 
   if (done) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F4F7FB' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E4E2DC' }}>
         <div style={{ textAlign: 'center', maxWidth: 400, padding: '0 24px', animation: 'fadeInUp 0.4s ease both' }}>
           <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#ECFDF5', border: '2px solid #16A34A30', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 6L9 17l-5-5"/>
             </svg>
           </div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#0C1A2E', marginBottom: 10 }}>Account created!</div>
-          <div style={{ fontSize: 14, color: '#5B728E', lineHeight: 1.6, marginBottom: 24 }}>We&apos;ve sent a verification email to <strong>{form.email}</strong>. Click the link to activate your account and access your dashboard.</div>
-          <Link href="/login" style={{ display: 'inline-flex', padding: '11px 24px', background: '#2563EB', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>Back to Login</Link>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#141310', marginBottom: 10 }}>Account created!</div>
+          <div style={{ fontSize: 14, color: '#2E2C26', lineHeight: 1.6, marginBottom: 24 }}>We&apos;ve sent a verification email to <strong>{form.email}</strong>. Click the link to activate your account and access your dashboard.</div>
+          <Link href="/login" style={{ display: 'inline-flex', padding: '11px 24px', background: '#1F4A35', color: '#fff', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>Back to Login</Link>
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export default function RegisterPage() {
         }
       `}</style>
       {/* Brand */}
-      <div className="reg-brand" style={{ background: 'linear-gradient(155deg, #1E3A8A 0%, #2563EB 60%, #60A5FA 100%)', padding: 48, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', zIndex: 0 }}>
+      <div className="reg-brand" style={{ background: 'linear-gradient(155deg, #13160F 0%, #1F4A35 60%, #2A6347 100%)', padding: 48, display: 'flex', flexDirection: 'column', position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', zIndex: 0 }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 65%)' }}/>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative', zIndex: 1, marginBottom: 'auto' }}>
           <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'float 3s ease-in-out infinite' }}>
@@ -128,13 +128,13 @@ export default function RegisterPage() {
             {steps.map((s,i)=>(
               <div key={s} style={{ display:'flex', alignItems:'center', flex: i < steps.length-1 ? 1 : 'none' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <div style={{ width:28, height:28, borderRadius:'50%', background:i<step?'#16A34A':i===step?'#2563EB':'#EDF2F8', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:i<step?'#16A34A':i===step?'#1F4A35':'#EDF2F8', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.3s' }}>
                     {i<step ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                    : <span style={{ fontSize:12, fontWeight:700, color:i===step?'#fff':'#8FA9C4' }}>{i+1}</span>}
+                    : <span style={{ fontSize:12, fontWeight:700, color:i===step?'#fff':'#555049' }}>{i+1}</span>}
                   </div>
-                  <span style={{ fontSize:13, fontWeight:i===step?700:400, color:i===step?'#0C1A2E':i<step?'#16A34A':'#8FA9C4' }}>{s}</span>
+                  <span style={{ fontSize:13, fontWeight:i===step?700:400, color:i===step?'#141310':i<step?'#16A34A':'#555049' }}>{s}</span>
                 </div>
-                {i<steps.length-1 && <div style={{ flex:1, height:1, background:i<step?'#16A34A':'#DDE5F0', margin:'0 12px', transition:'background 0.3s' }}/>}
+                {i<steps.length-1 && <div style={{ flex:1, height:1, background:i<step?'#16A34A':'rgba(0,0,0,0.16)', margin:'0 12px', transition:'background 0.3s' }}/>}
               </div>
             ))}
           </div>
@@ -144,21 +144,21 @@ export default function RegisterPage() {
           {/* Step 0 — Account */}
           {step === 0 && (
             <div>
-              <div style={{ fontSize:24, fontWeight:800, color:'#0C1A2E', marginBottom:6 }}>Create your account</div>
-              <div style={{ fontSize:14, color:'#5B728E', marginBottom:28 }}>Enter your email and set a strong password.</div>
+              <div style={{ fontSize:24, fontWeight:800, color:'#141310', marginBottom:6 }}>Create your account</div>
+              <div style={{ fontSize:14, color:'#2E2C26', marginBottom:28 }}>Enter your email and set a strong password.</div>
 
               <div style={{ marginBottom:18 }}>
-                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#5B728E', marginBottom:6 }}>Email address <span style={{color:'#DC2626'}}>*</span></label>
+                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Email address <span style={{color:'#DC2626'}}>*</span></label>
                 <input type="email" value={form.email} onChange={e=>upd('email')(e.target.value)} placeholder="you@company.com.ng"
-                  style={{ width:'100%', padding:'11px 14px', background:'#F4F7FB', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontFamily:'Plus Jakarta Sans', color:'#0C1A2E', outline:'none' }}/>
+                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
               </div>
 
               <div style={{ marginBottom:18 }}>
-                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#5B728E', marginBottom:6 }}>Password <span style={{color:'#DC2626'}}>*</span></label>
+                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Password <span style={{color:'#DC2626'}}>*</span></label>
                 <div style={{ position:'relative' }}>
                   <input type={showPw?'text':'password'} value={form.password} onChange={e=>upd('password')(e.target.value)} placeholder="Min. 8 characters"
-                    style={{ width:'100%', padding:'11px 44px 11px 14px', background:'#F4F7FB', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontFamily:'Plus Jakarta Sans', color:'#0C1A2E', outline:'none' }}/>
-                  <button type="button" onClick={()=>setShowPw(!showPw)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#8FA9C4' }}>
+                    style={{ width:'100%', padding:'11px 44px 11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
+                  <button type="button" onClick={()=>setShowPw(!showPw)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#555049' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                     </svg>
@@ -168,20 +168,20 @@ export default function RegisterPage() {
               </div>
 
               <div style={{ marginBottom:24 }}>
-                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#5B728E', marginBottom:6 }}>Confirm password <span style={{color:'#DC2626'}}>*</span></label>
+                <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Confirm password <span style={{color:'#DC2626'}}>*</span></label>
                 <input type="password" value={form.confirmPassword} onChange={e=>upd('confirmPassword')(e.target.value)} placeholder="Repeat your password"
-                  style={{ width:'100%', padding:'11px 14px', background:'#F4F7FB', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontFamily:'Plus Jakarta Sans', color:'#0C1A2E', outline:'none' }}/>
+                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
               </div>
 
-              <button onClick={()=>{setError('');setStep(1)}} disabled={!form.email||!form.password||form.password!==form.confirmPassword} style={{ width:'100%', padding:13, background:'#2563EB', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'Plus Jakarta Sans', cursor:'pointer', opacity:(!form.email||!form.password||form.password!==form.confirmPassword)?0.5:1 }}>
+              <button onClick={()=>{setError('');setStep(1)}} disabled={!form.email||!form.password||form.password!==form.confirmPassword} style={{ width:'100%', padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:'pointer', opacity:(!form.email||!form.password||form.password!==form.confirmPassword)?0.5:1 }}>
                 Continue →
               </button>
 
-              <div style={{ display:'flex', alignItems:'center', gap:12, margin:'18px 0', color:'#8FA9C4', fontSize:12 }}>
-                <div style={{ flex:1, height:1, background:'#DDE5F0' }} />or<div style={{ flex:1, height:1, background:'#DDE5F0' }} />
+              <div style={{ display:'flex', alignItems:'center', gap:12, margin:'18px 0', color:'#555049', fontSize:12 }}>
+                <div style={{ flex:1, height:1, background:'rgba(0,0,0,0.16)' }} />or<div style={{ flex:1, height:1, background:'rgba(0,0,0,0.16)' }} />
               </div>
 
-              <button type="button" onClick={handleGoogle} style={{ width:'100%', padding:12, background:'#fff', color:'#0C1A2E', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontWeight:600, fontFamily:'Plus Jakarta Sans', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+              <button type="button" onClick={handleGoogle} style={{ width:'100%', padding:12, background:'#fff', color:'#141310', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
@@ -196,20 +196,20 @@ export default function RegisterPage() {
           {/* Step 1 — Business */}
           {step === 1 && (
             <div>
-              <div style={{ fontSize:24, fontWeight:800, color:'#0C1A2E', marginBottom:6 }}>Your business details</div>
-              <div style={{ fontSize:14, color:'#5B728E', marginBottom:28 }}>Help us personalise your dashboard.</div>
+              <div style={{ fontSize:24, fontWeight:800, color:'#141310', marginBottom:6 }}>Your business details</div>
+              <div style={{ fontSize:14, color:'#2E2C26', marginBottom:28 }}>Help us personalise your dashboard.</div>
 
               {[{k:'name' as const, l:'Full name', p:'e.g. Amaka Okonkwo', r:true},{k:'company' as const, l:'Business name', p:'e.g. Lagos Bakery'},{k:'phone' as const, l:'Phone number', p:'+234 801 234 5678'}].map(({k,l,p,r})=>(
                 <div key={k} style={{ marginBottom:18 }}>
-                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#5B728E', marginBottom:6 }}>{l}{r&&<span style={{color:'#DC2626'}}> *</span>}</label>
+                  <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>{l}{r&&<span style={{color:'#DC2626'}}> *</span>}</label>
                   <input value={form[k]} onChange={e=>upd(k)(e.target.value)} placeholder={p}
-                    style={{ width:'100%', padding:'11px 14px', background:'#F4F7FB', border:'1.5px solid #DDE5F0', borderRadius:10, fontSize:14, fontFamily:'Plus Jakarta Sans', color:'#0C1A2E', outline:'none' }}/>
+                    style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
                 </div>
               ))}
 
               <div style={{ display:'flex', gap:12, marginTop:8 }}>
-                <button onClick={()=>setStep(0)} style={{ flex:1, padding:13, background:'#F4F7FB', color:'#5B728E', border:'1px solid #DDE5F0', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:'Plus Jakarta Sans', cursor:'pointer' }}>← Back</button>
-                <button onClick={()=>setStep(2)} disabled={!form.name} style={{ flex:2, padding:13, background:'#2563EB', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'Plus Jakarta Sans', cursor:'pointer', opacity:!form.name?0.5:1 }}>Continue →</button>
+                <button onClick={()=>setStep(0)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer' }}>← Back</button>
+                <button onClick={()=>setStep(2)} disabled={!form.name} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:'pointer', opacity:!form.name?0.5:1 }}>Continue →</button>
               </div>
             </div>
           )}
@@ -217,10 +217,10 @@ export default function RegisterPage() {
           {/* Step 2 — Plan */}
           {step === 2 && (
             <div>
-              <div style={{ fontSize:24, fontWeight:800, color:'#0C1A2E', marginBottom:6 }}>Choose your plan</div>
-              <div style={{ fontSize:14, color:'#5B728E', marginBottom:28 }}>One flat monthly rate. No hidden fees.</div>
+              <div style={{ fontSize:24, fontWeight:800, color:'#141310', marginBottom:6 }}>Choose your plan</div>
+              <div style={{ fontSize:14, color:'#2E2C26', marginBottom:28 }}>One flat monthly rate. No hidden fees.</div>
 
-              <div style={{ background:'linear-gradient(135deg,#1E3A8A 0%,#2563EB 60%,#3B82F6 100%)', borderRadius:16, padding:'24px 26px', marginBottom:24, color:'#fff', position:'relative', overflow:'hidden' }}>
+              <div style={{ background:'linear-gradient(135deg,#13160F 0%,#1F4A35 60%,#2A6347 100%)', borderRadius:16, padding:'24px 26px', marginBottom:24, color:'#fff', position:'relative', overflow:'hidden' }}>
                 <div style={{ position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}/>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
                   <div>
@@ -239,19 +239,19 @@ export default function RegisterPage() {
                 ))}
               </div>
 
-              <div style={{ fontSize:12, color:'#8FA9C4', textAlign:'center', marginBottom:24 }}>Payment is processed securely by Paystack after account setup.</div>
+              <div style={{ fontSize:12, color:'#555049', textAlign:'center', marginBottom:24 }}>Payment is processed securely by Paystack after account setup.</div>
 
               <div style={{ display:'flex', gap:12 }}>
-                <button onClick={()=>setStep(1)} style={{ flex:1, padding:13, background:'#F4F7FB', color:'#5B728E', border:'1px solid #DDE5F0', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:'Plus Jakarta Sans', cursor:'pointer' }}>← Back</button>
-                <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:13, background:'#2563EB', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'Plus Jakarta Sans', cursor:loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity:loading?0.7:1 }}>
+                <button onClick={()=>setStep(1)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer' }}>← Back</button>
+                <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity:loading?0.7:1 }}>
                   {loading ? <><div style={{ width:20, height:20, border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }}/> Creating account…</> : 'Create Account'}
                 </button>
               </div>
             </div>
           )}
 
-          <div style={{ textAlign:'center', fontSize:13, color:'#5B728E', marginTop:28 }}>
-            Already have an account? <Link href="/login" style={{ color:'#2563EB', fontWeight:700, textDecoration:'none' }}>Sign in →</Link>
+          <div style={{ textAlign:'center', fontSize:13, color:'#2E2C26', marginTop:28 }}>
+            Already have an account? <Link href="/login" style={{ color:'#1F4A35', fontWeight:700, textDecoration:'none' }}>Sign in →</Link>
           </div>
         </div>
       </div>
