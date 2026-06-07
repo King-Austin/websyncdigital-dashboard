@@ -95,7 +95,7 @@ export default function AdminDashboardWrapper({ children, user, profile }: Props
               <IcBell sz={16} col={T.textS}/>
               <span style={{ position: 'absolute', top: 8, right: 8, width: 6, height: 6, borderRadius: '50%', background: T.danger }}/>
             </div>
-            <Link href="/client" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            <Link href="/client" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-app)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
               Client View →
             </Link>
           </>

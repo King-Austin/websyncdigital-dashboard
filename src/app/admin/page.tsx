@@ -221,13 +221,42 @@ export default function AdminOverview() {
   );
 }
 
+function useCountUp(end: string | number, duration = 900): string {
+  const numeric = typeof end === 'number' ? end : parseFloat(String(end).replace(/[^0-9.]/g, ''));
+  const isNumeric = !isNaN(numeric) && numeric > 0;
+  const prefix = typeof end === 'string' ? end.match(/^[^0-9]*/)?.[0] ?? '' : '';
+  const suffix = typeof end === 'string' ? end.match(/[^0-9.]+$/)?.[0] ?? '' : '';
+  const [display, setDisplay] = React.useState<string>(isNumeric ? '0' : String(end));
+
+  React.useEffect(() => {
+    if (!isNumeric) { setDisplay(String(end)); return; }
+    const start = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const cur = Math.round(eased * numeric);
+      const formatted = typeof end === 'string' && String(end).includes(',')
+        ? cur.toLocaleString()
+        : String(cur);
+      setDisplay(`${prefix}${formatted}${suffix}`);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [end]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return display;
+}
+
 function MiniStat({ label, value, col, icon }: { label: string; value: number | string; col: string; icon: React.ReactElement }) {
+  const animated = useCountUp(value);
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 10.5, color: T.textM, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.6px', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{label}</div>
-          <div style={{ fontSize: 26, fontWeight: 600, color: col, lineHeight: 1, letterSpacing: '-0.02em', fontFamily: 'var(--font-serif)' }}>{value}</div>
+          <div style={{ fontSize: 26, fontWeight: 600, color: col, lineHeight: 1, letterSpacing: '-0.02em', fontFamily: 'var(--font-serif)' }}>{animated}</div>
         </div>
         <div style={{ width: 34, height: 34, borderRadius: 10, background: col + '16', border: `1px solid ${col}25`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

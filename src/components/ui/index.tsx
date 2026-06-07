@@ -4,6 +4,35 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { T, ini } from '@/lib/theme';
 
+// ── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
+function useCountUp(end: string | number, duration = 900): string {
+  const numeric = typeof end === 'number' ? end : parseFloat(String(end).replace(/[^0-9.]/g, ''));
+  const isNumeric = !isNaN(numeric) && numeric > 0;
+  const [display, setDisplay] = React.useState<string>(isNumeric ? '0' : String(end));
+  const prefix = typeof end === 'string' ? end.match(/^[^0-9]*/)?.[0] ?? '' : '';
+  const suffix = typeof end === 'string' ? end.match(/[^0-9.]+$/)?.[0] ?? '' : '';
+
+  React.useEffect(() => {
+    if (!isNumeric) { setDisplay(String(end)); return; }
+    const start = performance.now();
+    let raf: number;
+    const tick = (now: number) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const cur = Math.round(eased * numeric);
+      const formatted = typeof end === 'string' && String(end).includes(',')
+        ? cur.toLocaleString()
+        : String(cur);
+      setDisplay(`${prefix}${formatted}${suffix}`);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [end]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return display;
+}
+
 // ── DOT ──────────────────────────────────────────────────────────────────────
 export const Dot = ({ color = '#16A34A', pulse = false }: { color?: string; pulse?: boolean }) => (
   <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 10, height: 10 }}>
@@ -40,7 +69,7 @@ export const Btn = ({ children, variant = 'primary', sz = 'md', onClick, disable
   return (
     <button type={type} onClick={onClick} disabled={disabled} style={{
       ...vs[variant], ...ss[sz],
-      borderRadius: 8, fontFamily: 'Plus Jakarta Sans', fontWeight: 600,
+      borderRadius: 8, fontFamily: 'var(--font-app)', fontWeight: 600,
       cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
       display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
       transition: 'all 0.15s', ...xtra,
@@ -107,27 +136,30 @@ interface StatCardProps {
   col?: string;
 }
 
-export const StatCard = ({ label, value, sub, icon, trend, col = '#2563EB' }: StatCardProps) => (
-  <Card>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, color: T.textM, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-        <div style={{ fontSize: 26, fontWeight: 800, color: T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>{value}</div>
-        {sub && <div style={{ fontSize: 12, color: T.textS, marginTop: 7 }}>{sub}</div>}
-        {trend !== undefined && (
-          <div style={{ fontSize: 12, color: trend > 0 ? T.success : T.danger, marginTop: 5, fontWeight: 600 }}>
-            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% vs last month
+export const StatCard = ({ label, value, sub, icon, trend, col = '#2563EB' }: StatCardProps) => {
+  const animated = useCountUp(value);
+  return (
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, color: T.textM, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>{animated}</div>
+          {sub && <div style={{ fontSize: 12, color: T.textS, marginTop: 7 }}>{sub}</div>}
+          {trend !== undefined && (
+            <div style={{ fontSize: 12, color: trend > 0 ? T.success : T.danger, marginTop: 5, fontWeight: 600 }}>
+              {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% vs last month
+            </div>
+          )}
+        </div>
+        {icon && (
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: col + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 10 }}>
+            {React.cloneElement(icon, { sz: 19, col } as any)}
           </div>
         )}
       </div>
-      {icon && (
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: col + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 10 }}>
-          {React.cloneElement(icon, { sz: 19, col } as any)}
-        </div>
-      )}
-    </div>
-  </Card>
-);
+    </Card>
+  );
+};
 
 // ── INPUT ─────────────────────────────────────────────────────────────────────
 interface InputProps {
@@ -143,7 +175,7 @@ export const Input = ({ label, value, onChange, placeholder, type = 'text', requ
   <div style={{ marginBottom: 14 }}>
     {label && <div style={{ fontSize: 12, color: T.textS, marginBottom: 5, fontWeight: 600 }}>{label}{required && <span style={{ color: T.danger }}> *</span>}</div>}
     <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'Plus Jakarta Sans', outline: 'none', transition: 'border-color 0.15s' }} />
+      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'var(--font-app)', outline: 'none', transition: 'border-color 0.15s' }} />
   </div>
 );
 
@@ -152,7 +184,7 @@ export const Textarea = ({ label, value, onChange, placeholder, rows = 4 }: { la
   <div style={{ marginBottom: 14 }}>
     {label && <div style={{ fontSize: 12, color: T.textS, marginBottom: 5, fontWeight: 600 }}>{label}</div>}
     <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
-      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'Plus Jakarta Sans', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }} />
+      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'var(--font-app)', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }} />
   </div>
 );
 
@@ -161,7 +193,7 @@ export const Sel = ({ label, value, onChange, opts }: { label?: string; value: s
   <div style={{ marginBottom: 14 }}>
     {label && <div style={{ fontSize: 12, color: T.textS, marginBottom: 5, fontWeight: 600 }}>{label}</div>}
     <select value={value} onChange={e => onChange(e.target.value)}
-      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'Plus Jakarta Sans', outline: 'none', cursor: 'pointer' }}>
+      style={{ width: '100%', padding: '9px 12px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.text, fontSize: 13, fontFamily: 'var(--font-app)', outline: 'none', cursor: 'pointer' }}>
       {opts.map(o => {
         const v = typeof o === 'string' ? o : o.v;
         const l = typeof o === 'string' ? o : o.l;
@@ -248,6 +280,6 @@ export const SearchBar = ({ value, onChange, placeholder }: { value: string; onC
   <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px' }}>
     <IcSearch sz={15} col={T.textM} />
     <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Search...'}
-      style={{ background: 'none', border: 'none', color: T.text, fontSize: 13, fontFamily: 'Plus Jakarta Sans', outline: 'none', flex: 1 }} />
+      style={{ background: 'none', border: 'none', color: T.text, fontSize: 13, fontFamily: 'var(--font-app)', outline: 'none', flex: 1 }} />
   </div>
 );

@@ -38,7 +38,7 @@ export default function AdminRegisterPage() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '11px 14px', background: '#E4E2DC', border: '1.5px solid rgba(0,0,0,0.16)',
-    borderRadius: 10, fontSize: 14, fontFamily: "'DM Mono', monospace", color: '#141310', outline: 'none',
+    borderRadius: 10, fontSize: 14, fontFamily: 'var(--font-app)', color: '#141310', outline: 'none',
   };
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#2E2C26', marginBottom: 6 };
 
@@ -50,7 +50,7 @@ export default function AdminRegisterPage() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 17, color: '#141310', fontFamily: "'Cormorant Garamond', serif" }}>Admin Sign-up</div>
+            <div style={{ fontWeight: 800, fontSize: 17, color: '#141310', fontFamily: 'var(--font-app)' }}>Admin Sign-up</div>
             <div style={{ fontSize: 11, color: '#555049', letterSpacing: '0.8px', textTransform: 'uppercase' }}>Websync Digital</div>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function AdminRegisterPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={loading || !form.code || !form.email || !form.password} style={{ width: '100%', padding: 13, background: '#1F4A35', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: "'DM Mono', monospace", cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (loading || !form.code || !form.email || !form.password) ? 0.6 : 1 }}>
+          <button type="submit" disabled={loading || !form.code || !form.email || !form.password} style={{ width: '100%', padding: 13, background: '#1F4A35', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-app)', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (loading || !form.code || !form.email || !form.password) ? 0.6 : 1 }}>
             {loading ? <><div style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Creating…</> : 'Create admin account'}
           </button>
         </form>

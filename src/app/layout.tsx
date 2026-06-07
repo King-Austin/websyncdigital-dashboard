@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
-const plusJakarta = Plus_Jakarta_Sans({
+// Inter is a variable font, so no explicit weight array is needed. It is exposed
+// as the --font-sans CSS variable and consumed everywhere via globals.css.
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
+  variable: '--font-sans',
 });
 
 export const metadata: Metadata = {
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={plusJakarta.className}>
+    <html lang="en" className={`${inter.variable} ${inter.className}`}>
       <body style={{ minHeight: '100vh', background: '#F4F7FB' }}>
         {children}
         <Analytics />

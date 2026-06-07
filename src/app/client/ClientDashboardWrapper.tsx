@@ -7,7 +7,7 @@ import { T } from '@/lib/theme';
 import { ThemeProvider } from '@/lib/ThemeProvider';
 import { Sidebar, PageHeader, NavItem } from '@/components/layout/Sidebar';
 import { BottomNav, BottomTab } from '@/components/layout/BottomNav';
-import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog, IcPlus } from '@/components/ui/Icons';
+import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog, IcPlus, IcCard } from '@/components/ui/Icons';
 
 const CLIENT_TABS: BottomTab[] = [
   { k: '/client',          label: 'Home',     icon: <IcHome /> },
@@ -22,8 +22,9 @@ const CLIENT_NAV: NavItem[] = [
   { k: '/client/websites',     label: 'My Websites',        icon: <IcGlobe /> },
   { k: '/client/metrics',      label: 'Metrics',            icon: <IcBar /> },
   { k: 'd1', divider: true },
+  { k: '/client/billing',       label: 'Billing',           icon: <IcCard /> },
   { k: '/client/notifications', label: 'Notifications',     icon: <IcBell /> },
-  { k: '/client/settings',     label: 'Settings',           icon: <IcCog /> },
+  { k: '/client/settings',      label: 'Settings',          icon: <IcCog /> },
 ];
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
@@ -31,6 +32,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/client/projects':      { title: 'My Projects',        sub: 'Create a project and submit your brief' },
   '/client/websites':      { title: 'My Websites',        sub: 'Your active sites' },
   '/client/metrics':       { title: 'Website Metrics',    sub: 'Traffic, SEO and performance' },
+  '/client/billing':       { title: 'Billing',            sub: 'Manage your subscriptions and payments' },
   '/client/notifications': { title: 'Notifications',      sub: 'Your recent alerts' },
   '/client/settings':      { title: 'Settings',           sub: 'Manage your profile and account' },
 };
@@ -88,7 +90,7 @@ export default function ClientDashboardWrapper({ children, user, profile }: Prop
             </Link>
             {/* Only admins (browsing the client view) see the way back. Real clients never do. */}
             {profile?.role === 'admin' && (
-              <Link href="/admin" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              <Link href="/admin" style={{ padding: '6px 14px', background: T.elevated, border: `1px solid ${T.border}`, borderRadius: 8, color: T.textS, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-app)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                 Admin View →
               </Link>
             )}

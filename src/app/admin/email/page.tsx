@@ -95,7 +95,7 @@ export default function AdminEmail() {
         {(['compose', 'templates', 'history'] as const).map(v => {
           const labels: Record<Tab, string> = { compose: 'Compose', templates: 'Auto Templates', history: 'Send History' };
           return (
-            <button key={v} onClick={() => setTab(v)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: tab === v ? T.card : 'transparent', color: tab === v ? T.text : T.textS, fontSize: 12, fontWeight: tab === v ? 600 : 400, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', boxShadow: tab === v ? '0 1px 3px rgba(12,26,46,0.08)' : 'none', transition: 'all 0.15s' }}>
+            <button key={v} onClick={() => setTab(v)} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: tab === v ? T.card : 'transparent', color: tab === v ? T.text : T.textS, fontSize: 12, fontWeight: tab === v ? 600 : 400, cursor: 'pointer', fontFamily: 'var(--font-app)', boxShadow: tab === v ? '0 1px 3px rgba(12,26,46,0.08)' : 'none', transition: 'all 0.15s' }}>
               {labels[v]}
             </button>
           );
@@ -110,7 +110,7 @@ export default function AdminEmail() {
               <div style={{ fontSize: 12, color: T.textS, marginBottom: 6, fontWeight: 600 }}>Quick Templates</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {EMAIL_TEMPLATES.map(t => (
-                  <button key={t.id} onClick={() => applyTemplate(t)} style={{ padding: '5px 12px', border: `1px solid ${T.border}`, borderRadius: 20, background: T.elevated, color: T.textS, fontSize: 12, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', fontWeight: 500 }}>
+                  <button key={t.id} onClick={() => applyTemplate(t)} style={{ padding: '5px 12px', border: `1px solid ${T.border}`, borderRadius: 20, background: T.elevated, color: T.textS, fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-app)', fontWeight: 500 }}>
                     {t.label}
                   </button>
                 ))}

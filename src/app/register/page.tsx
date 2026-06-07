@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { getURL } from '@/lib/getURL';
 
 const steps = ['Account', 'Business', 'Plan'];
 
@@ -62,7 +63,7 @@ export default function RegisterPage() {
     const supabase = createClient();
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${getURL()}/auth/callback` },
     });
     if (err) setError(err.message);
   }
@@ -150,14 +151,14 @@ export default function RegisterPage() {
               <div style={{ marginBottom:18 }}>
                 <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Email address <span style={{color:'#DC2626'}}>*</span></label>
                 <input type="email" value={form.email} onChange={e=>upd('email')(e.target.value)} placeholder="you@company.com.ng"
-                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
+                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:'var(--font-app)', color:'#141310', outline:'none' }}/>
               </div>
 
               <div style={{ marginBottom:18 }}>
                 <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Password <span style={{color:'#DC2626'}}>*</span></label>
                 <div style={{ position:'relative' }}>
                   <input type={showPw?'text':'password'} value={form.password} onChange={e=>upd('password')(e.target.value)} placeholder="Min. 8 characters"
-                    style={{ width:'100%', padding:'11px 44px 11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
+                    style={{ width:'100%', padding:'11px 44px 11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:'var(--font-app)', color:'#141310', outline:'none' }}/>
                   <button type="button" onClick={()=>setShowPw(!showPw)} style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#555049' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -170,10 +171,10 @@ export default function RegisterPage() {
               <div style={{ marginBottom:24 }}>
                 <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>Confirm password <span style={{color:'#DC2626'}}>*</span></label>
                 <input type="password" value={form.confirmPassword} onChange={e=>upd('confirmPassword')(e.target.value)} placeholder="Repeat your password"
-                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
+                  style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:'var(--font-app)', color:'#141310', outline:'none' }}/>
               </div>
 
-              <button onClick={()=>{setError('');setStep(1)}} disabled={!form.email||!form.password||form.password!==form.confirmPassword} style={{ width:'100%', padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:'pointer', opacity:(!form.email||!form.password||form.password!==form.confirmPassword)?0.5:1 }}>
+              <button onClick={()=>{setError('');setStep(1)}} disabled={!form.email||!form.password||form.password!==form.confirmPassword} style={{ width:'100%', padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'var(--font-app)', cursor:'pointer', opacity:(!form.email||!form.password||form.password!==form.confirmPassword)?0.5:1 }}>
                 Continue →
               </button>
 
@@ -181,7 +182,7 @@ export default function RegisterPage() {
                 <div style={{ flex:1, height:1, background:'rgba(0,0,0,0.16)' }} />or<div style={{ flex:1, height:1, background:'rgba(0,0,0,0.16)' }} />
               </div>
 
-              <button type="button" onClick={handleGoogle} style={{ width:'100%', padding:12, background:'#fff', color:'#141310', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
+              <button type="button" onClick={handleGoogle} style={{ width:'100%', padding:12, background:'#fff', color:'#141310', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontWeight:600, fontFamily:'var(--font-app)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/>
@@ -203,13 +204,13 @@ export default function RegisterPage() {
                 <div key={k} style={{ marginBottom:18 }}>
                   <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#2E2C26', marginBottom:6 }}>{l}{r&&<span style={{color:'#DC2626'}}> *</span>}</label>
                   <input value={form[k]} onChange={e=>upd(k)(e.target.value)} placeholder={p}
-                    style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:"'DM Mono', monospace", color:'#141310', outline:'none' }}/>
+                    style={{ width:'100%', padding:'11px 14px', background:'#E4E2DC', border:'1.5px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:14, fontFamily:'var(--font-app)', color:'#141310', outline:'none' }}/>
                 </div>
               ))}
 
               <div style={{ display:'flex', gap:12, marginTop:8 }}>
-                <button onClick={()=>setStep(0)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer' }}>← Back</button>
-                <button onClick={()=>setStep(2)} disabled={!form.name} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:'pointer', opacity:!form.name?0.5:1 }}>Continue →</button>
+                <button onClick={()=>setStep(0)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:'var(--font-app)', cursor:'pointer' }}>← Back</button>
+                <button onClick={()=>setStep(2)} disabled={!form.name} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'var(--font-app)', cursor:'pointer', opacity:!form.name?0.5:1 }}>Continue →</button>
               </div>
             </div>
           )}
@@ -242,8 +243,8 @@ export default function RegisterPage() {
               <div style={{ fontSize:12, color:'#555049', textAlign:'center', marginBottom:24 }}>Payment is processed securely by Paystack after account setup.</div>
 
               <div style={{ display:'flex', gap:12 }}>
-                <button onClick={()=>setStep(1)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:"'DM Mono', monospace", cursor:'pointer' }}>← Back</button>
-                <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:"'DM Mono', monospace", cursor:loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity:loading?0.7:1 }}>
+                <button onClick={()=>setStep(1)} style={{ flex:1, padding:13, background:'#E4E2DC', color:'#2E2C26', border:'1px solid rgba(0,0,0,0.16)', borderRadius:10, fontSize:15, fontWeight:600, fontFamily:'var(--font-app)', cursor:'pointer' }}>← Back</button>
+                <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:13, background:'#1F4A35', color:'#fff', border:'none', borderRadius:10, fontSize:15, fontWeight:700, fontFamily:'var(--font-app)', cursor:loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity:loading?0.7:1 }}>
                   {loading ? <><div style={{ width:20, height:20, border:'2px solid rgba(255,255,255,0.4)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }}/> Creating account…</> : 'Create Account'}
                 </button>
               </div>

@@ -61,7 +61,7 @@ export default function AdminPortfolio() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {cats.map(c => (
-            <button key={c} onClick={() => setFilter(c)} style={{ padding: '5px 14px', borderRadius: 20, border: `1px solid ${filter===c?T.accent:T.border}`, background: filter===c ? T.accent+'12' : 'transparent', color: filter===c ? T.accent : T.textS, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', transition: 'all 0.12s' }}>
+            <button key={c} onClick={() => setFilter(c)} style={{ padding: '5px 14px', borderRadius: 20, border: `1px solid ${filter===c?T.accent:T.border}`, background: filter===c ? T.accent+'12' : 'transparent', color: filter===c ? T.accent : T.textS, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-app)', transition: 'all 0.12s' }}>
               {c === 'all' ? 'All' : c}
             </button>
           ))}

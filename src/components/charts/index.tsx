@@ -38,7 +38,7 @@ export const BarChart = ({ data, h = 120 }: { data: Array<{ m: string; r: number
         return (
           <g key={i}>
             <rect x={x} y={y} width={bw} height={bh} rx={5} fill={T.accent} fillOpacity={isCur ? 1 : 0.25} />
-            <text x={x + bw / 2} y={h + 16} textAnchor="middle" fill={T.textM} fontSize="11" fontFamily="Plus Jakarta Sans">{d.m}</text>
+            <text x={x + bw / 2} y={h + 16} textAnchor="middle" fill={T.textM} fontSize="11">{d.m}</text>
           </g>
         );
       })}

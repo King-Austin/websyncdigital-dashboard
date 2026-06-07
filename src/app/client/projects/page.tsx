@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { T } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
 import { Card, Btn, Input, Textarea, StatusBadge } from '@/components/ui';
-import { IcPlus, IcCard, IcCheck, IcGlobe, IcEdit, IcTrash, IcBar, IcCog, IcMail, IcAlert } from '@/components/ui/Icons';
+import { IcPlus, IcCard, IcCheck, IcGlobe, IcEdit, IcTrash, IcBar, IcCog, IcMail, IcAlert, IcFile } from '@/components/ui/Icons';
+import Link from 'next/link';
 import type { Project, WsInvoice } from '@/types';
 
 const BUCKET = 'ws-project-files';
@@ -23,7 +24,8 @@ function ProjectsInner() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading]   = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [paying, setPaying]     = useState<string | null>(null);
+  const [paying, setPaying]         = useState<string | null>(null);
+  const [confirmProject, setConfirmProject] = useState<Project | null>(null);
   const [justPaid, setJustPaid] = useState<string | null>(null);
   const [editing, setEditing]   = useState<Project | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -225,19 +227,24 @@ function ProjectsInner() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   {p.status === 'submitted' && (
-                    <Btn sz="sm" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                    <Btn sz="sm" onClick={() => setConfirmProject(p)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
                       <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Pay to activate'}
                     </Btn>
                   )}
                   {p.status === 'processing' && (
-                    <Btn sz="sm" variant="subtle" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                    <Btn sz="sm" variant="subtle" onClick={() => setConfirmProject(p)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
                       <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Complete payment'}
                     </Btn>
                   )}
                   {p.status === 'cancelled' && (
-                    <Btn sz="sm" variant="outline" onClick={() => startPayment(p.id)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
+                    <Btn sz="sm" variant="outline" onClick={() => setConfirmProject(p)} disabled={paying === p.id} style={{ flex: 1, justifyContent: 'center' }}>
                       <IcCard sz={13}/>{paying === p.id ? 'Starting…' : 'Re-subscribe'}
                     </Btn>
+                  )}
+                  {p.status === 'active' && (
+                    <Link href="/client/billing" style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '5px 11px', fontSize: 12, fontWeight: 600, color: T.textS, border: `1px solid ${T.border}`, borderRadius: 8, textDecoration: 'none', background: 'transparent', fontFamily: 'var(--font-app)' }}>
+                      <IcFile sz={12} col={T.textS}/> Manage subscription
+                    </Link>
                   )}
 
                   {/* CRUD — icon-only, only while payment is not completed */}
@@ -264,6 +271,55 @@ function ProjectsInner() {
           onClose={() => setEditing(null)}
           onCreated={() => { setEditing(null); load(); }}
         />
+      )}
+
+      {/* ── Pre-checkout billing disclosure modal ────────────────────────────── */}
+      {confirmProject && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(12,26,46,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backdropFilter: 'blur(4px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setConfirmProject(null); }}>
+          <div style={{ background: '#fff', borderRadius: 18, padding: 28, maxWidth: 420, width: '100%', boxShadow: '0 16px 48px rgba(12,26,46,0.18)', border: `1px solid ${T.border}` }}>
+            {/* Icon + title */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: T.accent + '14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <IcCard sz={20} col={T.accent}/>
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.text, letterSpacing: '-0.3px' }}>Confirm your subscription</div>
+                <div style={{ fontSize: 12, color: T.textS, marginTop: 2 }}>{confirmProject.name}</div>
+              </div>
+            </div>
+
+            {/* Billing breakdown */}
+            <div style={{ background: T.elevated, borderRadius: 12, padding: '16px 18px', marginBottom: 18, border: `1px solid ${T.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: `1px solid ${T.border}`, marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: T.text, fontWeight: 600 }}>Due today</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: T.accent, letterSpacing: '-0.5px' }}>₦9,999</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 13, color: T.text, fontWeight: 600 }}>Then monthly</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>₦9,999/mo</div>
+              </div>
+              <div style={{ fontSize: 11.5, color: T.textM, marginTop: 8, lineHeight: 1.55 }}>
+                Billed on the same date each month. Your card will be charged automatically until you cancel.
+              </div>
+            </div>
+
+            {/* What's included note */}
+            <div style={{ fontSize: 12.5, color: T.textS, marginBottom: 18, lineHeight: 1.6, padding: '10px 14px', background: T.accent + '08', borderRadius: 10, borderLeft: `3px solid ${T.accent}` }}>
+              Includes domain management, hosting, monthly maintenance, and priority support. You can cancel anytime from the <strong>Billing</strong> section of your dashboard — no penalties.
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Btn variant="outline" onClick={() => setConfirmProject(null)} style={{ flex: 1, justifyContent: 'center' }}>
+                Cancel
+              </Btn>
+              <Btn onClick={() => { const p = confirmProject; setConfirmProject(null); startPayment(p.id); }} disabled={paying === confirmProject.id} style={{ flex: 2, justifyContent: 'center' }}>
+                <IcCard sz={14}/>{paying === confirmProject.id ? 'Starting…' : 'Continue to payment'}
+              </Btn>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -514,7 +570,7 @@ function ValuePanel() {
           <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.78)', marginTop: 2 }}>Domain management + website maintenance, billed monthly on each active project.</div>
         </div>
         <button onClick={() => setOpen(o => !o)}
-          style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', whiteSpace: 'nowrap' }}>
+          style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '7px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-app)', whiteSpace: 'nowrap' }}>
           {open ? 'Hide details' : "What's included"}
         </button>
       </div>

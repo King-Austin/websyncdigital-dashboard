@@ -25,7 +25,7 @@ const LogoutButton = () => {
       width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
       borderRadius: 9, background: 'transparent', border: `1px solid ${T.border}`,
       cursor: loading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 500,
-      color: T.danger, fontFamily: 'Plus Jakarta Sans', marginTop: 8, transition: 'all 0.12s',
+      color: T.danger, fontFamily: 'var(--font-app)', marginTop: 8, transition: 'all 0.12s',
       opacity: loading ? 0.6 : 1,
     }}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.danger} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -44,7 +44,7 @@ const ThemeToggle = () => {
       width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px',
       borderRadius: 9, background: 'transparent', border: `1px solid ${T.border}`,
       cursor: 'pointer', fontSize: 13, fontWeight: 500, color: T.textS,
-      fontFamily: 'Plus Jakarta Sans', marginBottom: 8, transition: 'all 0.12s',
+      fontFamily: 'var(--font-app)', marginBottom: 8, transition: 'all 0.12s',
     }}>
       {dark ? (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -62,11 +62,8 @@ const ThemeToggle = () => {
 
 export const WsLogo = () => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-    <div style={{ width: 36, height: 36, borderRadius: 10, background: T.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 2px 8px ${T.accent}50` }}>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M3 12L7.5 20L12 9L16.5 20L21 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
+    {/* eslint-disable-next-line @next/next/no-img-element -- fixed-size brand mark from /public, no optimization needed */}
+    <img src="/websync-logo.png" alt="Websync Digital" width={36} height={36} style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, objectFit: 'cover', display: 'block' }} />
     <div>
       <div style={{ fontWeight: 800, fontSize: 15, color: T.text, letterSpacing: '-0.3px', lineHeight: 1.2 }}>Websync</div>
       <div style={{ fontWeight: 500, fontSize: 10, color: T.textM, letterSpacing: '0.8px', textTransform: 'uppercase' }}>Digital</div>
@@ -113,7 +110,7 @@ export const Sidebar = ({ items, active, onSelect, role, userName, userEmail, op
             color: active === item.k ? T.accent : T.textS,
             border: active === item.k ? `1px solid ${T.accent}25` : '1px solid transparent',
             cursor: 'pointer', fontSize: 13, fontWeight: active === item.k ? 600 : 400, textAlign: 'left',
-            fontFamily: 'Plus Jakarta Sans', marginBottom: 2, transition: 'all 0.12s',
+            fontFamily: 'var(--font-app)', marginBottom: 2, transition: 'all 0.12s',
           }}>
             {item.icon && React.cloneElement(item.icon, { sz: 16, col: active === item.k ? T.accent : T.textM } as any)}
             <span style={{ flex: 1 }}>{item.label}</span>

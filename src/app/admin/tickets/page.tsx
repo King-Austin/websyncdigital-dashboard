@@ -70,7 +70,7 @@ export default function AdminTickets() {
 
       <Row style={{ marginBottom: 18 }}>
         {(['all', 'open', 'resolved'] as const).map(v => (
-          <button key={v} onClick={() => setFilter(v)} style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter===v?T.accent:T.border}`, background: filter===v ? T.accent+'12' : 'transparent', color: filter===v ? T.accent : T.textS, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'Plus Jakarta Sans' }}>
+          <button key={v} onClick={() => setFilter(v)} style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter===v?T.accent:T.border}`, background: filter===v ? T.accent+'12' : 'transparent', color: filter===v ? T.accent : T.textS, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-app)' }}>
             {v.charAt(0).toUpperCase() + v.slice(1)} ({counts[v]})
           </button>
         ))}

@@ -18,7 +18,8 @@ Nothing is "default". Every font, color, and spacing choice is a deliberate argu
 
 ### What this system is NOT
 - No purple gradients
-- No Inter/Roboto/system-ui body copy
+- ~~No Inter/Roboto/system-ui body copy~~ — **superseded: the dashboard app now uses Inter
+  site-wide for legibility. See the correction banner in §3 Typography.**
 - No rounded pill buttons on everything
 - No card-soup layouts with equal-weight shadows everywhere
 - No dark-mode-as-an-afterthought (both modes are first-class)
@@ -66,7 +67,40 @@ Nothing is "default". Every font, color, and spacing choice is a deliberate argu
 
 ## 3. Typography
 
+> ### ⚠️ CORRECTION (2026-06-07) — supersedes this entire section for the dashboard app
+>
+> **The dashboard now uses ONE sans-serif typeface — Inter — for everything: display,
+> headings, body, and all UI chrome. The serif (Cormorant Garamond) + mono (DM Mono)
+> system below is no longer in effect.**
+>
+> **Why:** The editorial serif/mono pairing read as "too stylish" and hurt legibility in a
+> dense, data-heavy dashboard — Cormorant Garamond's high-contrast serif strokes are hard to
+> scan at small UI sizes, and forcing DM Mono onto every button/input made controls read as
+> code rather than actions. A neutral, screen-optimized sans-serif is more legible at the sizes
+> and densities this app actually uses, and self-hosting Inter via `next/font` removes the
+> external `fonts.googleapis.com` request (better on 2G/3G).
+>
+> **How to apply going forward:**
+> - **Typeface:** Inter, loaded via `next/font/google` in `src/app/layout.tsx`, exposed as the
+>   `--font-sans` CSS variable.
+> - **Token:** consume `var(--font-app)` (defined in `src/app/globals.css`), which chains Inter
+>   with an `Arial`/system fallback. `--font-serif` and `--font-mono` are kept only as aliases
+>   pointing at the same sans — do not reintroduce real serif/mono families.
+> - **Weights:** `700` is allowed for headings (legibility beats the old `600` cap). Drop the
+>   forced uppercase/wide letter-spacing on labels and nav — it costs legibility.
+> - **Do NOT** add `font-family` to inline styles or `@import` Google Fonts. Let elements inherit
+>   Inter from `<html>`, or reference `var(--font-app)`.
+> - The serif/mono type scale, italic-emphasis rule, and "never mix fonts in prose" rules below
+>   are **historical** — kept for design-rationale context only; they do not govern the app.
+
 ### Font Stack
+
+```css
+/* Single UI typeface — Inter, self-hosted via next/font (current). */
+font-family: var(--font-app);  /* = var(--font-sans), Arial, system-ui, sans-serif */
+```
+
+<details><summary>Original editorial font stack (superseded — see correction above)</summary>
 
 ```css
 /* Display & Body — Primary serif */
@@ -82,6 +116,8 @@ font-family: 'DM Mono', 'JetBrains Mono', 'Courier New', monospace;
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
+
+</details>
 
 ### Type Scale
 
@@ -841,7 +877,8 @@ Dark mode is not just color inversion. The dark sections have their own identity
 - ✅ Use one italic word/phrase per headline as the emotional anchor
 - ✅ Alternate light and dark sections
 - ✅ Keep body copy under 36ch wide
-- ✅ Use DM Mono for all numbers, stats, labels, and timestamps
+- ✅ Use Inter (`var(--font-app)`) for everything — display, body, labels, numbers, and UI
+  _(was: DM Mono for numbers/labels — superseded, see §3 correction)_
 - ✅ Keep amber accent strictly for dark backgrounds
 - ✅ Use section eyebrows (`01 — NAME`) consistently
 - ✅ Keep the CTA count per section to exactly one
@@ -850,7 +887,8 @@ Dark mode is not just color inversion. The dark sections have their own identity
 
 ### Don't
 - ❌ No purple. Not even as an accent. Especially not gradients.
-- ❌ No Inter, Roboto, or system-ui for display or body copy
+- ~~❌ No Inter, Roboto, or system-ui for display or body copy~~ — **superseded: Inter is now
+  the single typeface for the dashboard. See §3 Typography correction.**
 - ❌ No equal-weight shadows on cards (use border instead)
 - ❌ No more than 2 CTAs in the viewport at any time
 - ❌ No full-width body text on desktop
@@ -858,7 +896,8 @@ Dark mode is not just color inversion. The dark sections have their own identity
 - ❌ No green on dark backgrounds (use amber instead for emphasis)
 - ❌ No more than 3 different font sizes per section
 - ❌ No decorative borders with border-radius (use full borders or none)
-- ❌ Never use `font-weight: 700` — max is `600` for display, `500` for UI
+- ~~❌ Never use `font-weight: 700` — max is `600` for display, `500` for UI~~ — **superseded:
+  `700` is allowed for headings now (Inter at `700` reads as a clean bold and aids legibility).**
 
 ---
 
