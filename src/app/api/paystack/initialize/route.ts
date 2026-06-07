@@ -91,5 +91,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     authorization_url: json.data.authorization_url,
     access_code: json.data.access_code,
+    email,
   });
 }

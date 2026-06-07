@@ -112,6 +112,7 @@ function ProjectsInner() {
 
       const handler = (window as any).PaystackPop.setup({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: data.email,
         access_code: data.access_code,
         onSuccess: () => {
           setJustPaid(projectId);
