@@ -3,41 +3,44 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { T } from '@/lib/theme';
-import { IcHome, IcBriefcase, IcGlobe, IcBell, IcPlus } from '@/components/ui/Icons';
 
-interface Tab {
-  k: string;
+export interface BottomTab {
+  k: string;                 // route to navigate to
   label: string;
   icon: React.ReactElement;
   badge?: boolean;
 }
 
-const LEFT: Tab[] = [
-  { k: '/client',          label: 'Home',     icon: <IcHome /> },
-  { k: '/client/projects', label: 'Projects', icon: <IcBriefcase /> },
-];
-
-const RIGHT: Tab[] = [
-  { k: '/client/websites',     label: 'Sites',  icon: <IcGlobe /> },
-  { k: '/client/notifications', label: 'Alerts', icon: <IcBell />, badge: true },
-];
-
-function isActive(pathname: string, k: string) {
-  return k === '/client' ? pathname === '/client' : pathname.startsWith(k);
+export interface BottomFab {
+  label: string;
+  icon: React.ReactElement;
+  href: string;
 }
 
-export const BottomNav = () => {
+interface BottomNavProps {
+  tabs: BottomTab[];
+  /** Route treated as an exact-match root (e.g. '/client' or '/admin'). */
+  root: string;
+  /** Optional center floating action button (placed between left/right halves). */
+  fab?: BottomFab;
+}
+
+function isActive(pathname: string, k: string, root: string) {
+  return k === root ? pathname === root : pathname.startsWith(k);
+}
+
+export const BottomNav = ({ tabs, root, fab }: BottomNavProps) => {
   const pathname = usePathname();
   const router   = useRouter();
 
-  const TabBtn = ({ tab }: { tab: Tab }) => {
-    const active = isActive(pathname, tab.k);
+  const TabBtn = ({ tab }: { tab: BottomTab }) => {
+    const active = isActive(pathname, tab.k, root);
     const col = active ? T.accent : T.textM;
     return (
       <button onClick={() => router.push(tab.k)} aria-label={tab.label} style={{
         flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '6px 0', position: 'relative',
-        fontFamily: 'inherit',
+        fontFamily: 'inherit', minWidth: 0,
       }}>
         <span style={{ position: 'relative', display: 'inline-flex' }}>
           {React.cloneElement(tab.icon, { sz: 21, col } as { sz: number; col: string })}
@@ -45,10 +48,15 @@ export const BottomNav = () => {
             <span style={{ position: 'absolute', top: -1, right: -3, width: 7, height: 7, borderRadius: '50%', background: T.danger, border: `1.5px solid ${T.sidebar}` }} />
           )}
         </span>
-        <span style={{ fontSize: 10.5, fontWeight: active ? 700 : 500, color: col, letterSpacing: '0.2px' }}>{tab.label}</span>
+        <span style={{ fontSize: 10.5, fontWeight: active ? 700 : 500, color: col, letterSpacing: '0.2px', whiteSpace: 'nowrap' }}>{tab.label}</span>
       </button>
     );
   };
+
+  // With a FAB, split the tabs into two halves around the center button.
+  const mid   = fab ? Math.ceil(tabs.length / 2) : tabs.length;
+  const left  = tabs.slice(0, mid);
+  const right = fab ? tabs.slice(mid) : [];
 
   return (
     <nav className="ws-bottomnav" aria-label="Primary">
@@ -78,15 +86,17 @@ export const BottomNav = () => {
         .ws-fab:active { transform: scale(0.92); }
       `}</style>
 
-      {LEFT.map(t => <TabBtn key={t.k} tab={t} />)}
+      {left.map(t => <TabBtn key={t.k} tab={t} />)}
 
-      <div className="ws-fab-wrap">
-        <button className="ws-fab" aria-label="New project" onClick={() => router.push('/client/projects?new=1')}>
-          <IcPlus sz={24} col="#fff" />
-        </button>
-      </div>
+      {fab && (
+        <div className="ws-fab-wrap">
+          <button className="ws-fab" aria-label={fab.label} onClick={() => router.push(fab.href)}>
+            {React.cloneElement(fab.icon, { sz: 24, col: '#fff' } as { sz: number; col: string })}
+          </button>
+        </div>
+      )}
 
-      {RIGHT.map(t => <TabBtn key={t.k} tab={t} />)}
+      {right.map(t => <TabBtn key={t.k} tab={t} />)}
     </nav>
   );
 };

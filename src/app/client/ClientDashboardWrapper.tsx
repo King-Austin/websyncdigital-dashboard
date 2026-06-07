@@ -6,8 +6,15 @@ import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { ThemeProvider } from '@/lib/ThemeProvider';
 import { Sidebar, PageHeader, NavItem } from '@/components/layout/Sidebar';
-import { BottomNav } from '@/components/layout/BottomNav';
-import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog } from '@/components/ui/Icons';
+import { BottomNav, BottomTab } from '@/components/layout/BottomNav';
+import { IcHome, IcGlobe, IcBar, IcBell, IcBriefcase, IcCog, IcPlus } from '@/components/ui/Icons';
+
+const CLIENT_TABS: BottomTab[] = [
+  { k: '/client',          label: 'Home',     icon: <IcHome /> },
+  { k: '/client/projects', label: 'Projects', icon: <IcBriefcase /> },
+  { k: '/client/websites', label: 'Sites',    icon: <IcGlobe /> },
+  { k: '/client/notifications', label: 'Alerts', icon: <IcBell />, badge: true },
+];
 
 const CLIENT_NAV: NavItem[] = [
   { k: '/client',              label: 'Overview',           icon: <IcHome /> },
@@ -92,7 +99,11 @@ export default function ClientDashboardWrapper({ children, user, profile }: Prop
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav
+        tabs={CLIENT_TABS}
+        root="/client"
+        fab={{ label: 'New project', icon: <IcPlus />, href: '/client/projects?new=1' }}
+      />
     </div>
     </ThemeProvider>
   );

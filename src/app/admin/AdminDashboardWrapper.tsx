@@ -6,7 +6,16 @@ import Link from 'next/link';
 import { T } from '@/lib/theme';
 import { ThemeProvider } from '@/lib/ThemeProvider';
 import { Sidebar, PageHeader, NavItem } from '@/components/layout/Sidebar';
+import { BottomNav, BottomTab } from '@/components/layout/BottomNav';
 import { IcHome, IcGlobe, IcBar, IcUsers, IcBriefcase, IcDollar, IcMsg, IcMail, IcCog, IcBell } from '@/components/ui/Icons';
+
+const ADMIN_TABS: BottomTab[] = [
+  { k: '/admin',          label: 'Overview', icon: <IcHome /> },
+  { k: '/admin/clients',  label: 'Clients',  icon: <IcUsers /> },
+  { k: '/admin/projects', label: 'Projects', icon: <IcBriefcase /> },
+  { k: '/admin/revenue',  label: 'Revenue',  icon: <IcDollar /> },
+  { k: '/admin/tickets',  label: 'Tickets',  icon: <IcMsg /> },
+];
 
 const ADMIN_NAV: NavItem[] = [
   { k: '/admin',           label: 'Overview',        icon: <IcHome /> },
@@ -58,6 +67,8 @@ export default function AdminDashboardWrapper({ children, user, profile }: Props
           .ws-main { margin-left: 0 !important; }
           .ws-overlay { display: block !important; }
           .ws-menu-btn { display: flex !important; }
+          /* clear the fixed bottom nav so content isn't hidden behind it */
+          .ws-main-content { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important; }
         }
       `}</style>
 
@@ -89,10 +100,12 @@ export default function AdminDashboardWrapper({ children, user, profile }: Props
             </Link>
           </>
         }/>
-        <main style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
+        <main className="ws-main-content" style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
           {children}
         </main>
       </div>
+
+      <BottomNav tabs={ADMIN_TABS} root="/admin" />
     </div>
     </ThemeProvider>
   );
