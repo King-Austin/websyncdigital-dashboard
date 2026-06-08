@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getURL } from '@/lib/getURL';
+import LegalLinks from '@/components/ui/LegalLinks';
 
 const steps = ['Account', 'Business', 'Plan'];
 
@@ -43,19 +44,17 @@ export default function RegisterPage() {
     setError('');
     try {
       const supabase = createClient();
-      const { data, error: err } = await supabase.auth.signUp({
+      const { error: err } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
         options: { data: { name: form.name, company: form.company, phone: form.phone } },
       });
       if (err) { setError(err.message); setLoading(false); return; }
-      if (data.user) {
-        const { error: profErr } = await supabase.from('ws_profiles').upsert({
-          id: data.user.id, name: form.name, company: form.company, phone: form.phone,
-          email: form.email, role: 'client',
-        });
-        if (profErr) { setError('Account created but profile save failed. Please contact support.'); setLoading(false); return; }
-      }
+      // The ws_handle_new_user trigger creates the ws_profiles row automatically
+      // from the signUp metadata (name/company/phone), bypassing RLS via
+      // SECURITY DEFINER. email is backfilled in the auth callback on first
+      // sign-in. No client-side profile write is needed (and it would fail RLS,
+      // since there's no session yet when email confirmation is on).
       setDone(true);
     } catch {
       setError('Something went wrong. Please check your connection and try again.');
@@ -261,6 +260,7 @@ export default function RegisterPage() {
           <div style={{ textAlign:'center', fontSize:13, color:'#2E2C26', marginTop:28 }}>
             Already have an account? <Link href="/login" style={{ color:'#1F4A35', fontWeight:700, textDecoration:'none' }}>Sign in →</Link>
           </div>
+          <LegalLinks style={{ marginTop: 14 }} />
         </div>
       </div>
     </div>

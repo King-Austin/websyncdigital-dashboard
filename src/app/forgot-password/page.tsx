@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { getURL } from '@/lib/getURL';
+import LegalLinks from '@/components/ui/LegalLinks';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail]     = useState('');
@@ -117,6 +118,8 @@ export default function ForgotPasswordPage() {
             </form>
           )}
         </div>
+
+        <LegalLinks />
       </div>
     </div>
   );

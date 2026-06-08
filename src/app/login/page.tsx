@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getURL } from '@/lib/getURL';
+import LegalLinks from '@/components/ui/LegalLinks';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -166,6 +167,7 @@ export default function LoginPage() {
               <div style={{ textAlign: 'center', fontSize: 12, color: '#555049', marginTop: 8 }}>
                 <Link href="/admin-register" style={{ color: '#555049', fontWeight: 600, textDecoration: 'none' }}>Admin sign-up</Link>
               </div>
+              <LegalLinks style={{ marginTop: 20 }} />
             </form>
           )}
         </div>

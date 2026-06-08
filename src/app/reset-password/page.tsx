@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import LegalLinks from '@/components/ui/LegalLinks';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -133,6 +134,8 @@ export default function ResetPasswordPage() {
             </form>
           )}
         </div>
+
+        <LegalLinks />
       </div>
     </div>
   );
