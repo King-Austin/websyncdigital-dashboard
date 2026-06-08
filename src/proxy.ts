@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin-register';
+  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin-register' || pathname === '/forgot-password';
   // /admin-register is a public signup page (outside the /admin dashboard tree)
   const isProtected = pathname.startsWith('/client')
     || (pathname.startsWith('/admin') && !pathname.startsWith('/admin-register'));

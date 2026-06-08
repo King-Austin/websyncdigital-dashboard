@@ -139,7 +139,7 @@ export default function LoginPage() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#2E2C26', cursor: 'pointer' }}>
                   <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: '#1F4A35' }} /> Remember me
                 </label>
-                <a href="#" style={{ fontSize: 13, color: '#1F4A35', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
+                <a href="/forgot-password" style={{ fontSize: 13, color: '#1F4A35', fontWeight: 600, textDecoration: 'none' }}>Forgot password?</a>
               </div>
 
               <button type="submit" disabled={loading || !email || !password} style={{ width: '100%', padding: 13, background: '#1F4A35', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-app)', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 14px rgba(31,74,53,0.28)', transition: 'all 0.15s', marginBottom: 16, opacity: loading ? 0.7 : 1 }}>
