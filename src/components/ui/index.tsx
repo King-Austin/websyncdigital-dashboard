@@ -5,10 +5,11 @@ import { createPortal } from 'react-dom';
 import { T, ini } from '@/lib/theme';
 
 // ── COUNT-UP HOOK ─────────────────────────────────────────────────────────────
-function useCountUp(end: string | number, duration = 900): string {
+function useCountUp(end: string | number, duration = 600): string {
   const numeric = typeof end === 'number' ? end : parseFloat(String(end).replace(/[^0-9.]/g, ''));
   const isNumeric = !isNaN(numeric) && numeric > 0;
-  const [display, setDisplay] = React.useState<string>(isNumeric ? '0' : String(end));
+  // Start at final value to avoid layout shift on SSR/hydration
+  const [display, setDisplay] = React.useState<string>(String(end));
   const prefix = typeof end === 'string' ? end.match(/^[^0-9]*/)?.[0] ?? '' : '';
   const suffix = typeof end === 'string' ? end.match(/[^0-9.]+$/)?.[0] ?? '' : '';
 
@@ -143,7 +144,7 @@ export const StatCard = ({ label, value, sub, icon, trend, col = '#2563EB' }: St
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 11, color: T.textM, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: T.text, lineHeight: 1, letterSpacing: '-0.5px' }}>{animated}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: T.text, lineHeight: 1, letterSpacing: '-0.5px', fontVariantNumeric: 'tabular-nums', minWidth: '3ch' }}>{animated}</div>
           {sub && <div style={{ fontSize: 12, color: T.textS, marginTop: 7 }}>{sub}</div>}
           {trend !== undefined && (
             <div style={{ fontSize: 12, color: trend > 0 ? T.success : T.danger, marginTop: 5, fontWeight: 600 }}>
