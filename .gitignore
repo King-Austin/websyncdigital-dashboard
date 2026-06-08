@@ -17,6 +17,12 @@
 /.next/
 /out/
 
+# PWA — generated service worker files (built by next-pwa at build time)
+/public/sw.js
+/public/sw.js.map
+/public/workbox-*.js
+/public/workbox-*.js.map
+
 # production
 /build
 .env.prod
@@ -54,3 +60,5 @@ next-env.d.ts
 .rtk/
 supabase/.temp/
 scheduled_tasks.lock
+
+.vercel
