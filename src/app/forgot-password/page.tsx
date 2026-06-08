@@ -16,21 +16,40 @@ export default function ForgotPasswordPage() {
     if (!email) return;
     setLoading(true);
     setError('');
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${getURL()}/auth/reset-password`,
-    });
-    if (err) {
-      setError(err.message);
+
+    try {
+      // Check the email exists in our system before sending a reset link
+      const checkRes = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const { exists } = await checkRes.json();
+      if (!exists) {
+        setError('No account found with that email address. Please check and try again, or contact support.');
+        setLoading(false);
+        return;
+      }
+
+      const supabase = createClient();
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${getURL()}/auth/reset-password`,
+      });
+      if (err) {
+        setError(err.message);
+        setLoading(false);
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError('Network error. Please check your connection and try again.');
       setLoading(false);
-    } else {
-      setSent(true);
     }
   }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E4E2DC', padding: 24 }}>
-      <style>{`@keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }`}</style>
+      <style>{`@keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ width: '100%', maxWidth: 400, animation: 'fadeInUp 0.4s ease both' }}>
 
         {/* Logo */}
