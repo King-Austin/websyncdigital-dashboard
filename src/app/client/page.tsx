@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { T } from '@/lib/theme';
+import { formatDomainExpiry, normalizeWebsiteUrl } from '@/lib/format';
 import { StatCard, Card, Grid2, SectionTitle, Row, Btn } from '@/components/ui';
 import { IcGlobe, IcBar, IcFile, IcLink, IcCal, IcCog } from '@/components/ui/Icons';
 import { StatusBadge, Dot } from '@/components/ui';
@@ -66,7 +67,7 @@ export default function ClientOverview() {
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 14, color: T.text, marginBottom: 3 }}>{site.name}</div>
                   {site.url && (
-                    <a href={'https://' + site.url} target="_blank" rel="noopener" style={{ fontSize: 12, color: T.textS, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <a href={normalizeWebsiteUrl(site.url)} target="_blank" rel="noopener" style={{ fontSize: 12, color: T.textS, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                       {site.url} <IcLink sz={11} col={T.textS}/>
                     </a>
                   )}
@@ -80,7 +81,7 @@ export default function ClientOverview() {
                 {[
                   { l: 'Visits (mo)', v: site.monthly_visits.toLocaleString() },
                   { l: 'SEO Score',   v: `${site.seo_score}/100`, c: site.seo_score >= 75 ? T.success : site.seo_score >= 60 ? T.warn : T.danger },
-                  { l: 'Domain Exp.', v: site.domain_expiry || '—' },
+                  { l: 'Domain Exp.', v: formatDomainExpiry(site.domain_expiry) },
                 ].map((m, i) => (
                   <div key={i} style={{ padding: '10px 12px', background: T.elevated, borderRadius: 8 }}>
                     <div style={{ fontSize: 10, color: T.textM, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.l}</div>
@@ -119,7 +120,7 @@ export default function ClientOverview() {
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 2 }}>{site.url || site.name}</div>
                   <div style={{ fontSize: 11, color: T.textM, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <IcCal sz={11} col={T.textM}/> {site.domain_expiry ? `Expires ${site.domain_expiry}` : 'No expiry set'}
+                    <IcCal sz={11} col={T.textM}/> {site.domain_expiry ? `Expires ${formatDomainExpiry(site.domain_expiry)}` : 'No expiry set'}
                   </div>
                 </div>
                 <StatusBadge s={site.status}/>

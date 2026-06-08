@@ -6,18 +6,36 @@ import { createAdminClient } from '@/lib/supabase/admin';
 // Admins see all; clients see only their own (RLS-scoped via their session).
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const invoiceId = searchParams.get('invoice_id');
   const clientId  = searchParams.get('client_id');
   const projectId = searchParams.get('project_id');
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
-
   // Use the user's RLS-scoped session so clients only get their own invoices.
   let query = supabase
     .from('ws_invoices')
     .select('*, ws_profiles(name, company)')
     .order('created_at', { ascending: false });
+
+  // If an invoice_id was provided, return the single invoice (admin or owning client)
+  if (invoiceId) {
+    const admin = createAdminClient();
+    const { data: invoice, error: invErr } = await admin
+      .from('ws_invoices')
+      .select('*, ws_profiles(name, company)')
+      .eq('id', invoiceId)
+      .single();
+    if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 });
+
+    // Ensure non-admins can only fetch their own invoice
+    const { data: me } = await admin.from('ws_profiles').select('role').eq('id', user.id).single();
+    if (me?.role !== 'admin' && invoice.client_id !== user.id) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+    }
+    return NextResponse.json(invoice);
+  }
 
   if (clientId)  query = query.eq('client_id', clientId);
   if (projectId) query = query.eq('project_id', projectId);

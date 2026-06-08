@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { T, fmt } from '@/lib/theme';
+import { formatDomainExpiry, normalizeWebsiteUrl, toDateInputValue } from '@/lib/format';
 import { Card, Row, Btn, SearchBar, Modal, Input, Sel } from '@/components/ui';
 import { StatusBadge, Dot } from '@/components/ui';
 import { IcPlus, IcEdit, IcTrash, IcLink, IcCheck } from '@/components/ui/Icons';
@@ -47,7 +48,7 @@ export default function AdminWebsites() {
   );
 
   const openAdd  = () => { setEditId(null); setForm(blank); setModal(true); };
-  const openEdit = (s: WebsiteRow) => { setEditId(s.id); setForm({ name: s.name, url: s.url || '', client_id: s.client_id, status: s.status, domain_expiry: s.domain_expiry || '', monthly_fee: String(s.monthly_fee) }); setModal(true); };
+  const openEdit = (s: WebsiteRow) => { setEditId(s.id); setForm({ name: s.name, url: s.url || '', client_id: s.client_id, status: s.status, domain_expiry: toDateInputValue(s.domain_expiry) || s.domain_expiry || '', monthly_fee: String(s.monthly_fee) }); setModal(true); };
 
   const handleDel = async (id: number) => {
     await fetch(`/api/websites/${id}`, { method: 'DELETE' });
@@ -91,7 +92,7 @@ export default function AdminWebsites() {
               <tr key={s.id} style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : 'none' }}>
                 <td style={{ padding: '12px 14px' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{s.name}</div>
-                  {s.url && <a href={'https://' + s.url} target="_blank" rel="noopener" style={{ fontSize: 11, color: T.accent, textDecoration: 'none' }}>{s.url}</a>}
+                  {s.url && <a href={normalizeWebsiteUrl(s.url)} target="_blank" rel="noopener" style={{ fontSize: 11, color: T.accent, textDecoration: 'none' }}>{s.url}</a>}
                 </td>
                 <td style={{ padding: '12px 14px', fontSize: 12, color: T.textS }}>{s.ws_profiles?.company || '—'}</td>
                 <td style={{ padding: '12px 14px' }}>
@@ -99,13 +100,13 @@ export default function AdminWebsites() {
                 </td>
                 <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 700, color: s.seo_score>=75?T.success:s.seo_score>=60?T.warn:T.danger }}>{s.seo_score}</td>
                 <td style={{ padding: '12px 14px', fontSize: 13, color: T.text }}>{s.monthly_visits.toLocaleString()}</td>
-                <td style={{ padding: '12px 14px', fontSize: 12, color: T.textS }}>{s.domain_expiry || '—'}</td>
+                <td style={{ padding: '12px 14px', fontSize: 12, color: T.textS }}>{formatDomainExpiry(s.domain_expiry)}</td>
                 <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 700, color: s.monthly_fee>0?T.success:T.textM }}>{s.monthly_fee > 0 ? fmt(s.monthly_fee) : '—'}</td>
                 <td style={{ padding: '12px 14px' }}>
                   <Row>
                     <Btn sz="sm" variant="ghost" onClick={() => openEdit(s)}><IcEdit sz={12}/></Btn>
                     <Btn sz="sm" variant="ghost" style={{ color: T.danger }} onClick={() => handleDel(s.id)}><IcTrash sz={12}/></Btn>
-                    {s.url && <a href={'https://' + s.url} target="_blank" rel="noopener"><Btn sz="sm" variant="ghost"><IcLink sz={12}/></Btn></a>}
+                    {s.url && <a href={normalizeWebsiteUrl(s.url)} target="_blank" rel="noopener"><Btn sz="sm" variant="ghost"><IcLink sz={12}/></Btn></a>}
                   </Row>
                 </td>
               </tr>
@@ -121,7 +122,7 @@ export default function AdminWebsites() {
           <Input label="URL" value={form.url} onChange={upd('url')} placeholder="e.g. amakasbakery.com.ng"/>
           <Sel label="Client" value={form.client_id} onChange={upd('client_id')} opts={[{v:'',l:'Select client…'}, ...clientOpts.map(c => ({v:c.id,l:c.company || c.name}))]}/>
           <Sel label="Status" value={form.status} onChange={upd('status')} opts={[{v:'live',l:'Live'},{v:'maintenance',l:'Maintenance'},{v:'down',l:'Down'}]}/>
-          <Input label="Domain Expiry"    value={form.domain_expiry} onChange={upd('domain_expiry')} placeholder="e.g. Aug 12, 2026"/>
+          <Input label="Domain Expiry"    value={form.domain_expiry} onChange={upd('domain_expiry')} type="date"/>
           <Input label="Monthly Fee (₦)" value={form.monthly_fee}   onChange={upd('monthly_fee')}   placeholder="9999" type="number"/>
         </div>
         {form.url && <WebsitePreview url={form.url} height={160}/>}

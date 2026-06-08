@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { T } from '@/lib/theme';
+import { formatDomainExpiry, normalizeWebsiteUrl } from '@/lib/format';
 import { Card, StatCard, Grid2, Row, Btn } from '@/components/ui';
 import { StatusBadge } from '@/components/ui';
 import { IcBar, IcTrend, IcMsg, IcCal, IcLink, IcGlobe, IcZap } from '@/components/ui/Icons';
@@ -90,7 +91,7 @@ export default function ClientMetrics() {
           {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         {site.url && (
-          <a href={'https://' + site.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: T.accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <a href={normalizeWebsiteUrl(site.url)} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: T.accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
             {site.url} <IcLink sz={11} col={T.accent}/>
           </a>
         )}
@@ -107,10 +108,29 @@ export default function ClientMetrics() {
         <StatCard label="Visits This Month" value={visits.toLocaleString()} icon={<IcBar/>} col={T.accent}/>
         <StatCard label="SEO Score" value={`${seo}/100`} sub={seo >= 75 ? 'Healthy' : seo > 0 ? 'Needs work' : 'Not measured'} icon={<IcTrend/>} col={seo >= 75 ? T.success : T.warn}/>
         <StatCard label="Form Submissions" value={site.form_submissions ?? 0} sub="This month" icon={<IcMsg/>} col={T.info}/>
-        <StatCard label="Domain Expires" value={site.domain_expiry ?? '—'} sub="Plan ahead" icon={<IcCal/>} col={T.warn}/>
+        <StatCard label="Domain Expires" value={formatDomainExpiry(site.domain_expiry)} sub="Plan ahead" icon={<IcCal/>} col={T.warn}/>
       </div>
 
-      <Card style={{ marginBottom: 20 }}>
+      <Grid2>
+        <Card>
+          <div style={{ fontWeight: 600, fontSize: 14, color: T.text, marginBottom: 14 }}>Domain Info</div>
+          {[
+            { l: 'Domain Name',   v: site.url ?? '—' },
+            { l: 'Domain Expiry', v: formatDomainExpiry(site.domain_expiry) },
+          ].map((r, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < 1 ? `1px solid ${T.border}` : 'none' }}>
+              <span style={{ fontSize: 13, color: T.textS }}>{r.l}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: T.text, textAlign: 'right', maxWidth: '55%' }}>{r.v}</span>
+            </div>
+          ))}
+        </Card>
+        <Card>
+          <div style={{ fontWeight: 600, fontSize: 14, color: T.text, marginBottom: 14 }}>Site Health</div>
+          {[
+            { l: 'Status',           v: <StatusBadge s={site.status}/> },
+            { l: 'SEO Score',        v: <span style={{ fontWeight: 700, color: seo >= 75 ? T.success : seo >= 60 ? T.warn : T.danger }}>{seo}/100</span> },
+
+      <Card style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, color: T.text }}>Traffic Overview</div>
@@ -126,26 +146,6 @@ export default function ClientMetrics() {
           {weeks.map((w, i) => <div key={i} style={{ fontSize: 11, color: T.textM, textAlign: 'center', flex: 1 }}>{w}</div>)}
         </div>
       </Card>
-
-      <Grid2>
-        <Card>
-          <div style={{ fontWeight: 600, fontSize: 14, color: T.text, marginBottom: 14 }}>Domain Info</div>
-          {[
-            { l: 'Domain Name',   v: site.url ?? '—' },
-            { l: 'Domain Expiry', v: site.domain_expiry ?? '—' },
-            { l: 'Service Plan',  v: `Monthly Retainer — ₦${(site.monthly_fee ?? 9999).toLocaleString()}/mo` },
-          ].map((r, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: i < 2 ? `1px solid ${T.border}` : 'none' }}>
-              <span style={{ fontSize: 13, color: T.textS }}>{r.l}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: T.text, textAlign: 'right', maxWidth: '55%' }}>{r.v}</span>
-            </div>
-          ))}
-        </Card>
-        <Card>
-          <div style={{ fontWeight: 600, fontSize: 14, color: T.text, marginBottom: 14 }}>Site Health</div>
-          {[
-            { l: 'Status',           v: <StatusBadge s={site.status}/> },
-            { l: 'SEO Score',        v: <span style={{ fontWeight: 700, color: seo >= 75 ? T.success : seo >= 60 ? T.warn : T.danger }}>{seo}/100</span> },
             { l: 'Form Submissions', v: site.form_submissions ?? 0 },
             { l: 'Monthly Visits',   v: visits.toLocaleString() },
           ].map((r, i) => (

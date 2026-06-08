@@ -2,15 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { T } from '@/lib/theme';
+import Link from 'next/link';
 import { Btn, StatusBadge, Modal, Input, Sel, Row } from '@/components/ui';
 import { IcBriefcase, IcGlobe, IcCheck, IcAlert, IcX, IcChevD, IcCard } from '@/components/ui/Icons';
-import type { Project, ProjectFile } from '@/types';
+import type { Project, ProjectFile, WsInvoice } from '@/types';
 
 export default function AdminProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading]   = useState(true);
   const [open, setOpen]         = useState<string | null>(null);
   const [files, setFiles]       = useState<Record<string, ProjectFile[]>>({});
+  const [paidInvoices, setPaidInvoices] = useState<Record<string, WsInvoice[]>>({});
   const [updating, setUpdating] = useState<string | null>(null);
   const [invoiceFor, setInvoiceFor] = useState<Project | null>(null);
 
@@ -24,13 +26,26 @@ export default function AdminProjects() {
   async function toggle(id: string) {
     if (open === id) { setOpen(null); return; }
     setOpen(id);
+    const jobs: Promise<void>[] = [];
     if (!files[id]) {
-      const res = await fetch(`/api/projects/${id}/files`);
-      if (res.ok) {
-        const data = await res.json();
-        setFiles(f => ({ ...f, [id]: data }));
-      }
+      jobs.push((async () => {
+        const res = await fetch(`/api/projects/${id}/files`);
+        if (res.ok) {
+          const data = await res.json();
+          setFiles(f => ({ ...f, [id]: data }));
+        }
+      })());
     }
+    if (!paidInvoices[id]) {
+      jobs.push((async () => {
+        const res = await fetch(`/api/invoices?project_id=${id}`);
+        if (res.ok) {
+          const data: WsInvoice[] = await res.json();
+          setPaidInvoices(prev => ({ ...prev, [id]: data.filter(inv => inv.status === 'paid').sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)) }));
+        }
+      })());
+    }
+    await Promise.all(jobs);
   }
 
   async function setStatus(id: string, status: 'active' | 'cancelled' | 'submitted') {
@@ -160,6 +175,34 @@ export default function AdminProjects() {
                                 : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><IcGlobe sz={20} col={T.textM}/></div>}
                               <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 9, padding: '2px 4px', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{file.kind}</span>
                             </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginTop: 18 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: T.textS, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Recent paid invoices</div>
+                      {!paidInvoices[p.id] ? (
+                        <div style={{ fontSize: 12, color: T.textM }}>Loading invoices…</div>
+                      ) : paidInvoices[p.id].length === 0 ? (
+                        <div style={{ fontSize: 12, color: T.textM }}>No paid invoices yet.</div>
+                      ) : (
+                        <div style={{ display: 'grid', gap: 10 }}>
+                          {paidInvoices[p.id].slice(0, 4).map(inv => (
+                            <Link key={inv.id} href={`/admin/invoices/${inv.id}`} style={{ textDecoration: 'none' }}>
+                              <div style={{ padding: '12px 14px', border: `1px solid ${T.border}`, borderRadius: 12, background: T.elevated, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: T.text }}>{inv.description || 'Paid invoice'}</div>
+                                  <div style={{ fontSize: 11, color: T.textM, marginTop: 3 }}>
+                                    {inv.kind ? `${inv.kind} · ` : ''}{inv.paystack_reference || inv.id}
+                                  </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, color: T.success }}>₦{(inv.amount / 100).toLocaleString()}</div>
+                                  <div style={{ fontSize: 11, color: T.textM, marginTop: 3 }}>{new Date(inv.created_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                </div>
+                              </div>
+                            </Link>
                           ))}
                         </div>
                       )}

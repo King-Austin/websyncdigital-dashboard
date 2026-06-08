@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { T } from '@/lib/theme';
+import { formatDomainExpiry, normalizeWebsiteUrl } from '@/lib/format';
 import { Card, Row, Btn } from '@/components/ui';
 import { StatusBadge, Dot } from '@/components/ui';
 import { IcGlobe, IcLink, IcBar, IcCheck, IcCog, IcPlus, IcBriefcase, IcZap } from '@/components/ui/Icons';
@@ -89,7 +90,7 @@ export default function ClientWebsites() {
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: T.text }}>{site.name}</div>
                 {site.url && (
-                  <a href={'https://' + site.url} target="_blank" rel="noopener" style={{ fontSize: 12, color: T.accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <a href={normalizeWebsiteUrl(site.url)} target="_blank" rel="noopener" style={{ fontSize: 12, color: T.accent, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     {site.url} <IcLink sz={10} col={T.accent}/>
                   </a>
                 )}
@@ -106,7 +107,7 @@ export default function ClientWebsites() {
               { l: 'Monthly Visits',   v: site.monthly_visits.toLocaleString() },
               { l: 'SEO Score',        v: `${site.seo_score}/100`, c: site.seo_score >= 75 ? T.success : site.seo_score >= 60 ? T.warn : T.danger },
               { l: 'Form Submissions', v: site.form_submissions },
-              { l: 'Domain Expires',   v: site.domain_expiry || '—' },
+              { l: 'Domain Expires',   v: formatDomainExpiry(site.domain_expiry) },
             ].map((m, i) => (
               <div key={i}>
                 <div style={{ fontSize: 10, color: T.textM, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{m.l}</div>
@@ -118,7 +119,7 @@ export default function ClientWebsites() {
           <Row>
             <Link href="/client/metrics"><Btn sz="sm"><IcBar sz={12}/>Full Metrics</Btn></Link>
             {site.url && (
-              <a href={'https://' + site.url} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', border: `1px solid ${T.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: T.textS, textDecoration: 'none' }}>
+              <a href={normalizeWebsiteUrl(site.url)} target="_blank" rel="noopener" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 11px', border: `1px solid ${T.border}`, borderRadius: 8, fontSize: 12, fontWeight: 600, color: T.textS, textDecoration: 'none' }}>
                 <IcLink sz={12}/>Visit Site
               </a>
             )}
