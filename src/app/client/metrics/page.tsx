@@ -129,6 +129,16 @@ export default function ClientMetrics() {
           {[
             { l: 'Status',           v: <StatusBadge s={site.status}/> },
             { l: 'SEO Score',        v: <span style={{ fontWeight: 700, color: seo >= 75 ? T.success : seo >= 60 ? T.warn : T.danger }}>{seo}/100</span> },
+            { l: 'Form Submissions', v: site.form_submissions ?? 0 },
+            { l: 'Monthly Visits',   v: visits.toLocaleString() },
+          ].map((r, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < 3 ? `1px solid ${T.border}` : 'none' }}>
+              <span style={{ fontSize: 13, color: T.textS }}>{r.l}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{r.v as React.ReactNode}</span>
+            </div>
+          ))}
+        </Card>
+      </Grid2>
 
       <Card style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -146,16 +156,6 @@ export default function ClientMetrics() {
           {weeks.map((w, i) => <div key={i} style={{ fontSize: 11, color: T.textM, textAlign: 'center', flex: 1 }}>{w}</div>)}
         </div>
       </Card>
-            { l: 'Form Submissions', v: site.form_submissions ?? 0 },
-            { l: 'Monthly Visits',   v: visits.toLocaleString() },
-          ].map((r, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: i < 3 ? `1px solid ${T.border}` : 'none' }}>
-              <span style={{ fontSize: 13, color: T.textS }}>{r.l}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{r.v as React.ReactNode}</span>
-            </div>
-          ))}
-        </Card>
-      </Grid2>
     </div>
   );
 }
