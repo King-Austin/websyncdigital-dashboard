@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
       });
       const { exists } = await checkRes.json();
       if (!exists) {
-        setError('No account found with that email address. Please check and try again, or contact support.');
+        setError('No account found with that email address.');
         setLoading(false);
         return;
       }
